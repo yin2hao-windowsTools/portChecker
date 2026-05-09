@@ -49,28 +49,35 @@ internal sealed class ProcessMetadataProvider
             return;
         }
 
-        using var searcher = new ManagementObjectSearcher(
-            "SELECT ProcessId,Name,ExecutablePath,CommandLine FROM Win32_Process");
-
-        foreach (ManagementObject process in searcher.Get())
+        try
         {
-            using (process)
-            {
-                var processId = Convert.ToInt32(process["ProcessId"]);
-                if (!processIds.Contains(processId))
-                {
-                    continue;
-                }
+            using var searcher = new ManagementObjectSearcher(
+                "SELECT ProcessId,Name,ExecutablePath,CommandLine FROM Win32_Process");
 
-                var existing = GetOrCreate(metadata, processId);
-                metadata[processId] = existing with
+            foreach (ManagementObject process in searcher.Get())
+            {
+                using (process)
                 {
-                    ProcessName = ReadString(process["Name"]) ?? existing.ProcessName,
-                    ProcessPath = ReadString(process["ExecutablePath"]) ?? existing.ProcessPath,
-                    CommandLine = ReadString(process["CommandLine"]) ?? existing.CommandLine,
-                    UserName = ReadProcessOwner(process) ?? existing.UserName
-                };
+                    var processId = Convert.ToInt32(process["ProcessId"]);
+                    if (!processIds.Contains(processId))
+                    {
+                        continue;
+                    }
+
+                    var existing = GetOrCreate(metadata, processId);
+                    metadata[processId] = existing with
+                    {
+                        ProcessName = ReadString(process["Name"]) ?? existing.ProcessName,
+                        ProcessPath = ReadString(process["ExecutablePath"]) ?? existing.ProcessPath,
+                        CommandLine = ReadString(process["CommandLine"]) ?? existing.CommandLine,
+                        UserName = ReadProcessOwner(process) ?? existing.UserName
+                    };
+                }
             }
+        }
+        catch
+        {
+            // Runtime process data is still useful when WMI is unavailable or restricted.
         }
     }
 
@@ -81,30 +88,37 @@ internal sealed class ProcessMetadataProvider
             return;
         }
 
-        using var searcher = new ManagementObjectSearcher(
-            "SELECT Name,DisplayName,State,StartMode,PathName,ProcessId FROM Win32_Service");
-
-        foreach (ManagementObject service in searcher.Get())
+        try
         {
-            using (service)
+            using var searcher = new ManagementObjectSearcher(
+                "SELECT Name,DisplayName,State,StartMode,PathName,ProcessId FROM Win32_Service");
+
+            foreach (ManagementObject service in searcher.Get())
             {
-                var processId = Convert.ToInt32(service["ProcessId"]);
-                if (!processIds.Contains(processId))
+                using (service)
                 {
-                    continue;
+                    var processId = Convert.ToInt32(service["ProcessId"]);
+                    if (!processIds.Contains(processId))
+                    {
+                        continue;
+                    }
+
+                    var existing = GetOrCreate(metadata, processId);
+                    var services = existing.Services.ToList();
+                    services.Add(new ServiceInfo(
+                        ReadString(service["Name"]) ?? "-",
+                        ReadString(service["DisplayName"]) ?? "-",
+                        ReadString(service["State"]) ?? "-",
+                        ReadString(service["StartMode"]) ?? "-",
+                        ReadString(service["PathName"]) ?? "-"));
+
+                    metadata[processId] = existing with { Services = services };
                 }
-
-                var existing = GetOrCreate(metadata, processId);
-                var services = existing.Services.ToList();
-                services.Add(new ServiceInfo(
-                    ReadString(service["Name"]) ?? "-",
-                    ReadString(service["DisplayName"]) ?? "-",
-                    ReadString(service["State"]) ?? "-",
-                    ReadString(service["StartMode"]) ?? "-",
-                    ReadString(service["PathName"]) ?? "-"));
-
-                metadata[processId] = existing with { Services = services };
             }
+        }
+        catch
+        {
+            // svchost service details are best effort; do not fail the port scan.
         }
     }
 
