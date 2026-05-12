@@ -7,4 +7,5 @@ public sealed record PortScanResult(
     IReadOnlyList<PortEntry> Entries,
     DateTimeOffset ScannedAt,
     bool IsElevated,
-    string? Warning);
+    string? Warning,
+    string? PermissionNotice);

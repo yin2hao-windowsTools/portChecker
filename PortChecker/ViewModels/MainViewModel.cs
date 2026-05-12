@@ -23,6 +23,7 @@ internal sealed class MainViewModel : ObservableObject
     private PortEntry? _selectedPort;
     private bool _isRefreshing;
     private string _statusMessage = "准备扫描端口";
+    private string _permissionNotice = "普通权限：端口和 PID 可正常查看；部分系统进程详情可能受限，高风险操作会按需请求管理员权限。";
     private DateTimeOffset? _lastScannedAt;
     private bool _isElevated;
 
@@ -127,6 +128,12 @@ internal sealed class MainViewModel : ObservableObject
         private set => SetProperty(ref _statusMessage, value);
     }
 
+    public string PermissionNotice
+    {
+        get => _permissionNotice;
+        private set => SetProperty(ref _permissionNotice, value);
+    }
+
     public DateTimeOffset? LastScannedAt
     {
         get => _lastScannedAt;
@@ -165,7 +172,7 @@ internal sealed class MainViewModel : ObservableObject
 
     public string LastScannedText => LastScannedAt is null ? "尚未扫描" : LastScannedAt.Value.ToString("yyyy-MM-dd HH:mm:ss");
 
-    public string ElevationText => IsElevated ? "管理员权限" : "普通权限";
+    public string ElevationText => IsElevated ? "管理员权限" : "普通权限 - 按需提权";
 
     public async Task InitializeAsync()
     {
@@ -197,12 +204,13 @@ internal sealed class MainViewModel : ObservableObject
 
             LastScannedAt = result.ScannedAt;
             IsElevated = result.IsElevated;
+            PermissionNotice = result.PermissionNotice ?? PermissionNotice;
             SelectedPort = _ports.FirstOrDefault();
             PortsView.Refresh();
             RaiseCountProperties();
 
             StatusMessage = result.Warning is null
-                ? $"扫描完成，发现 {_ports.Count} 个端口占用"
+                ? $"扫描完成，发现 {_ports.Count} 个端口占用。{PermissionNotice}"
                 : $"扫描失败：{result.Warning}";
         }
         catch (OperationCanceledException)
