@@ -254,6 +254,34 @@ internal sealed class MainViewModel : ObservableObject
             StatusMessage = $"已结束 PID {selected.ProcessId}，正在刷新...";
             await RefreshAsync();
         }
+        catch (ProcessControlException exception) when (exception.CanRetryElevated)
+        {
+            var elevateResult = MessageBox.Show(
+                $"{exception.Message}{Environment.NewLine}{Environment.NewLine}是否以管理员权限重试结束 PID {selected.ProcessId}？",
+                "需要管理员权限",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning,
+                MessageBoxResult.No);
+
+            if (elevateResult != MessageBoxResult.Yes)
+            {
+                StatusMessage = $"结束进程受限：{exception.Message}";
+                return;
+            }
+
+            try
+            {
+                StatusMessage = $"正在请求管理员权限结束 PID {selected.ProcessId}...";
+                await _processControlService.KillProcessElevatedAsync(selected.ProcessId, CancellationToken.None);
+                StatusMessage = $"已结束 PID {selected.ProcessId}，正在刷新...";
+                await RefreshAsync();
+            }
+            catch (Exception elevatedException)
+            {
+                StatusMessage = $"管理员权限结束进程失败：{elevatedException.Message}";
+                MessageBox.Show(StatusMessage, "操作失败", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
         catch (Exception exception)
         {
             StatusMessage = $"结束进程失败：{exception.Message}";
