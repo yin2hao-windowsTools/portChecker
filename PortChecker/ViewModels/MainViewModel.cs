@@ -1,11 +1,11 @@
 using System;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Threading;
 using PortChecker.Models;
 using PortChecker.Services;
 
@@ -15,20 +15,30 @@ internal sealed class MainViewModel : ObservableObject
 {
     private readonly PortMonitorService _portMonitorService = new();
     private readonly ProcessControlService _processControlService = new();
-    private readonly ObservableCollection<PortEntry> _ports = [];
+    private readonly BulkObservableCollection<PortEntry> _ports = [];
+    private readonly DispatcherTimer _searchDebounceTimer;
     private CancellationTokenSource? _refreshCancellation;
     private string _searchText = string.Empty;
+    private string _searchKeyword = string.Empty;
     private string _protocolFilter = "全部";
     private string _stateFilter = "全部";
     private PortEntry? _selectedPort;
     private bool _isRefreshing;
     private string _statusMessage = "准备扫描端口";
     private string _permissionNotice = "普通权限：端口和 PID 可正常查看；部分系统进程详情可能受限，高风险操作会按需请求管理员权限。";
+    private string _serviceOperationResult = string.Empty;
+    private bool _isControllingService;
     private DateTimeOffset? _lastScannedAt;
     private bool _isElevated;
 
     public MainViewModel()
     {
+        _searchDebounceTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(180)
+        };
+        _searchDebounceTimer.Tick += SearchDebounceTimerTick;
+
         PortsView = CollectionViewSource.GetDefaultView(_ports);
         PortsView.Filter = FilterPort;
         PortsView.SortDescriptions.Add(new SortDescription(nameof(PortEntry.LocalPort), ListSortDirection.Ascending));
@@ -75,11 +85,19 @@ internal sealed class MainViewModel : ObservableObject
         get => _searchText;
         set
         {
-            if (SetProperty(ref _searchText, value))
+            if (SetProperty(ref _searchText, value ?? string.Empty))
             {
-                PortsView.Refresh();
+                _searchKeyword = _searchText.Trim();
                 ClearSearchCommand.RaiseCanExecuteChanged();
-                OnPropertyChanged(nameof(FilteredCount));
+                _searchDebounceTimer.Stop();
+
+                if (_searchKeyword.Length == 0)
+                {
+                    ApplyFilter();
+                    return;
+                }
+
+                _searchDebounceTimer.Start();
             }
         }
     }
@@ -91,8 +109,7 @@ internal sealed class MainViewModel : ObservableObject
         {
             if (SetProperty(ref _protocolFilter, value))
             {
-                PortsView.Refresh();
-                OnPropertyChanged(nameof(FilteredCount));
+                ApplyFilter();
             }
         }
     }
@@ -104,8 +121,7 @@ internal sealed class MainViewModel : ObservableObject
         {
             if (SetProperty(ref _stateFilter, value))
             {
-                PortsView.Refresh();
-                OnPropertyChanged(nameof(FilteredCount));
+                ApplyFilter();
             }
         }
     }
@@ -121,6 +137,7 @@ internal sealed class MainViewModel : ObservableObject
                 OpenLocationCommand.RaiseCanExecuteChanged();
                 StopServiceCommand.RaiseCanExecuteChanged();
                 RestartServiceCommand.RaiseCanExecuteChanged();
+                ServiceOperationResult = string.Empty;
                 OnPropertyChanged(nameof(SelectedServicesCount));
                 OnPropertyChanged(nameof(CanKillSelectedProcess));
                 OnPropertyChanged(nameof(KillProcessWarningText));
@@ -150,6 +167,27 @@ internal sealed class MainViewModel : ObservableObject
     {
         get => _permissionNotice;
         private set => SetProperty(ref _permissionNotice, value);
+    }
+
+    public string ServiceOperationRiskText { get; } = "服务级操作只会控制选中的 Windows 服务，不会结束整个 svchost；停止或重启系统服务仍可能中断网络、登录、打印、更新等依赖功能。";
+
+    public string ServiceOperationResult
+    {
+        get => _serviceOperationResult;
+        private set => SetProperty(ref _serviceOperationResult, value);
+    }
+
+    private bool IsControllingService
+    {
+        get => _isControllingService;
+        set
+        {
+            if (SetProperty(ref _isControllingService, value))
+            {
+                StopServiceCommand.RaiseCanExecuteChanged();
+                RestartServiceCommand.RaiseCanExecuteChanged();
+            }
+        }
     }
 
     public DateTimeOffset? LastScannedAt
@@ -214,22 +252,19 @@ internal sealed class MainViewModel : ObservableObject
                 return;
             }
 
-            _ports.Clear();
-            foreach (var port in result.Entries)
+            using (PortsView.DeferRefresh())
             {
-                _ports.Add(port);
+                _ports.ReplaceAll(result.Entries);
+                SelectedPort = _ports.FirstOrDefault();
             }
 
             LastScannedAt = result.ScannedAt;
             IsElevated = result.IsElevated;
             PermissionNotice = result.PermissionNotice ?? PermissionNotice;
-            SelectedPort = _ports.FirstOrDefault();
             PortsView.Refresh();
             RaiseCountProperties();
 
-            StatusMessage = result.Warning is null
-                ? $"扫描完成，发现 {_ports.Count} 个端口占用。{PermissionNotice}"
-                : $"扫描失败：{result.Warning}";
+            StatusMessage = BuildScanStatusMessage(result);
         }
         catch (OperationCanceledException)
         {
@@ -332,7 +367,11 @@ internal sealed class MainViewModel : ObservableObject
             return;
         }
 
-        await ControlServiceAsync(service, "停止", token => _processControlService.StopServiceAsync(service.Name, token));
+        await ControlServiceAsync(
+            service,
+            "停止",
+            token => _processControlService.StopServiceAsync(service.Name, token),
+            token => _processControlService.StopServiceElevatedAsync(service.Name, token));
     }
 
     private async Task RestartServiceAsync(object? parameter)
@@ -354,25 +393,76 @@ internal sealed class MainViewModel : ObservableObject
             return;
         }
 
-        await ControlServiceAsync(service, "重启", token => _processControlService.RestartServiceAsync(service.Name, token));
+        await ControlServiceAsync(
+            service,
+            "重启",
+            token => _processControlService.RestartServiceAsync(service.Name, token),
+            token => _processControlService.RestartServiceElevatedAsync(service.Name, token));
     }
 
     private async Task ControlServiceAsync(
         ServiceInfo service,
         string actionText,
-        Func<CancellationToken, Task> operation)
+        Func<CancellationToken, Task> operation,
+        Func<CancellationToken, Task> elevatedOperation)
     {
+        IsControllingService = true;
+
         try
         {
+            ServiceOperationResult = string.Empty;
             StatusMessage = $"正在{actionText}服务 {service.Name}...";
             await operation(CancellationToken.None);
-            StatusMessage = $"已{actionText}服务 {service.Name}，正在刷新...";
+            var completedMessage = $"已{actionText}服务 {service.DisplayLabel}，正在刷新状态...";
+            StatusMessage = completedMessage;
+            ServiceOperationResult = completedMessage;
             await RefreshAsync();
+            ServiceOperationResult = $"已{actionText}服务 {service.DisplayLabel}；列表已刷新，请核对服务状态。";
+            StatusMessage = ServiceOperationResult;
+        }
+        catch (ProcessControlException exception) when (exception.CanRetryElevated)
+        {
+            var elevateResult = MessageBox.Show(
+                $"{exception.Message}{Environment.NewLine}{Environment.NewLine}是否以管理员权限重试{actionText}服务 {service.DisplayLabel}？{Environment.NewLine}该操作仍只作用于这个服务，不会结束 svchost 进程。",
+                "需要管理员权限",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning,
+                MessageBoxResult.No);
+
+            if (elevateResult != MessageBoxResult.Yes)
+            {
+                ServiceOperationResult = $"{actionText}服务 {service.DisplayLabel} 受限：{exception.Message}";
+                StatusMessage = ServiceOperationResult;
+                return;
+            }
+
+            try
+            {
+                StatusMessage = $"正在请求管理员权限{actionText}服务 {service.Name}...";
+                ServiceOperationResult = StatusMessage;
+                await elevatedOperation(CancellationToken.None);
+                ServiceOperationResult = $"已通过管理员权限{actionText}服务 {service.DisplayLabel}，正在刷新状态...";
+                StatusMessage = ServiceOperationResult;
+                await RefreshAsync();
+                ServiceOperationResult = $"已通过管理员权限{actionText}服务 {service.DisplayLabel}；列表已刷新，请核对服务状态。";
+                StatusMessage = ServiceOperationResult;
+            }
+            catch (Exception elevatedException)
+            {
+                ServiceOperationResult = $"管理员权限{actionText}服务 {service.DisplayLabel} 失败：{elevatedException.Message}";
+                StatusMessage = ServiceOperationResult;
+                MessageBox.Show(ServiceOperationResult, "服务操作失败", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
         catch (Exception exception)
         {
-            StatusMessage = $"{actionText}服务 {service.Name} 失败：{exception.Message}";
-            MessageBox.Show(StatusMessage, "服务操作失败", MessageBoxButton.OK, MessageBoxImage.Error);
+            ServiceOperationResult = $"{actionText}服务 {service.DisplayLabel} 失败：{exception.Message}";
+            StatusMessage = ServiceOperationResult;
+            MessageBox.Show(ServiceOperationResult, "服务操作失败", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsControllingService = false;
         }
     }
 
@@ -416,27 +506,35 @@ internal sealed class MainViewModel : ObservableObject
             return true;
         }
 
-        var keyword = SearchText.Trim();
-        return Contains(port.ProtocolText, keyword)
-            || Contains(port.LocalEndpoint, keyword)
-            || Contains(port.RemoteEndpoint, keyword)
-            || Contains(port.State, keyword)
-            || Contains(port.ProcessId.ToString(), keyword)
-            || Contains(port.ProcessName, keyword)
-            || Contains(port.ProcessPath, keyword)
-            || Contains(port.CommandLine, keyword)
-            || Contains(port.UserName, keyword)
-            || port.Services.Any(service => Contains(service.Name, keyword) || Contains(service.DisplayName, keyword));
+        return port.SearchIndex.Contains(_searchKeyword, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static bool CanControlService(object? parameter)
+    private bool CanControlService(object? parameter)
     {
-        return parameter is ServiceInfo { CanControl: true, IsRunning: true };
+        return !IsControllingService && parameter is ServiceInfo { CanControl: true, IsRunning: true };
     }
 
-    private static bool Contains(string? source, string keyword)
+    private string BuildScanStatusMessage(PortScanResult result)
     {
-        return source?.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0;
+        if (result.Warning is not null)
+        {
+            return $"{result.Warning}。{PermissionNotice}";
+        }
+
+        var metrics = result.Metrics;
+        return $"扫描完成，发现 {_ports.Count} 个端口占用（总耗时 {metrics.TotalDuration.TotalMilliseconds:F0}ms，端口扫描 {metrics.PortSnapshotDuration.TotalMilliseconds:F0}ms，元数据 {metrics.MetadataDuration.TotalMilliseconds:F0}ms，进程 {metrics.DistinctProcessCount}）。{PermissionNotice}";
+    }
+
+    private void SearchDebounceTimerTick(object? sender, EventArgs e)
+    {
+        _searchDebounceTimer.Stop();
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        PortsView.Refresh();
+        OnPropertyChanged(nameof(FilteredCount));
     }
 
     private void RaiseCountProperties()

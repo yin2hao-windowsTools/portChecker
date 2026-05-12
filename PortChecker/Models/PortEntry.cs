@@ -6,6 +6,8 @@ namespace PortChecker.Models;
 
 public sealed class PortEntry
 {
+    private string? _searchIndex;
+
     public required PortProtocol Protocol { get; init; }
 
     public required string LocalAddress { get; init; }
@@ -45,4 +47,27 @@ public sealed class PortEntry
     public string PathSummary => string.IsNullOrWhiteSpace(ProcessPath) ? "无路径或权限不足" : ProcessPath;
 
     public string CommandSummary => string.IsNullOrWhiteSpace(CommandLine) ? "无命令行或权限不足" : CommandLine;
+
+    public string SearchIndex => _searchIndex ??= BuildSearchIndex();
+
+    private string BuildSearchIndex()
+    {
+        var serviceIndex = Services.Count == 0
+            ? string.Empty
+            : string.Join(' ', Services.Select(service => $"{service.Name} {service.DisplayName}"));
+
+        return string.Join(' ', new[]
+        {
+            ProtocolText,
+            LocalEndpoint,
+            RemoteEndpoint,
+            State,
+            ProcessId.ToString(),
+            ProcessName,
+            ProcessPath,
+            CommandLine,
+            UserName,
+            serviceIndex
+        }.Where(value => !string.IsNullOrWhiteSpace(value)));
+    }
 }

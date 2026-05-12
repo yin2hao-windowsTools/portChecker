@@ -8,4 +8,5 @@ public sealed record PortScanResult(
     DateTimeOffset ScannedAt,
     bool IsElevated,
     string? Warning,
-    string? PermissionNotice);
+    string? PermissionNotice,
+    ScanMetrics Metrics);

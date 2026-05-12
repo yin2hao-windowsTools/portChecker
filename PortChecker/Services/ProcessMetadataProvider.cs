@@ -1,14 +1,18 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Management;
+using System.Runtime.InteropServices;
 using PortChecker.Models;
 
 namespace PortChecker.Services;
 
 internal sealed class ProcessMetadataProvider
 {
+    private const int WmiQueryChunkSize = 64;
+
     public Dictionary<int, ProcessMetadata> GetMetadata(IEnumerable<int> processIds)
     {
         var requestedIds = processIds.Where(id => id > 0).Distinct().ToHashSet();
@@ -35,7 +39,19 @@ internal sealed class ProcessMetadataProvider
                     ProcessPath = TryGetProcessPath(process) ?? existing.ProcessPath
                 };
             }
-            catch
+            catch (ArgumentException)
+            {
+                metadata[processId] = GetOrCreate(metadata, processId);
+            }
+            catch (InvalidOperationException)
+            {
+                metadata[processId] = GetOrCreate(metadata, processId);
+            }
+            catch (Win32Exception)
+            {
+                metadata[processId] = GetOrCreate(metadata, processId);
+            }
+            catch (NotSupportedException)
             {
                 metadata[processId] = GetOrCreate(metadata, processId);
             }
@@ -51,31 +67,43 @@ internal sealed class ProcessMetadataProvider
 
         try
         {
-            using var searcher = new ManagementObjectSearcher(
-                "SELECT ProcessId,Name,ExecutablePath,CommandLine FROM Win32_Process");
-
-            foreach (ManagementObject process in searcher.Get())
+            foreach (var chunk in ChunkProcessIds(processIds))
             {
-                using (process)
-                {
-                    var processId = Convert.ToInt32(process["ProcessId"]);
-                    if (!processIds.Contains(processId))
-                    {
-                        continue;
-                    }
+                var whereClause = BuildProcessIdWhereClause(chunk);
+                using var searcher = new ManagementObjectSearcher(
+                    $"SELECT ProcessId,Name,ExecutablePath,CommandLine FROM Win32_Process WHERE {whereClause}");
 
-                    var existing = GetOrCreate(metadata, processId);
-                    metadata[processId] = existing with
+                foreach (ManagementObject process in searcher.Get())
+                {
+                    using (process)
                     {
-                        ProcessName = ReadString(process["Name"]) ?? existing.ProcessName,
-                        ProcessPath = ReadString(process["ExecutablePath"]) ?? existing.ProcessPath,
-                        CommandLine = ReadString(process["CommandLine"]) ?? existing.CommandLine,
-                        UserName = ReadProcessOwner(process) ?? existing.UserName
-                    };
+                        var processId = Convert.ToInt32(process["ProcessId"]);
+                        if (!processIds.Contains(processId))
+                        {
+                            continue;
+                        }
+
+                        var existing = GetOrCreate(metadata, processId);
+                        metadata[processId] = existing with
+                        {
+                            ProcessName = ReadString(process["Name"]) ?? existing.ProcessName,
+                            ProcessPath = ReadString(process["ExecutablePath"]) ?? existing.ProcessPath,
+                            CommandLine = ReadString(process["CommandLine"]) ?? existing.CommandLine,
+                            UserName = ReadProcessOwner(process) ?? existing.UserName
+                        };
+                    }
                 }
             }
         }
-        catch
+        catch (ManagementException)
+        {
+            // Runtime process data is still useful when WMI is unavailable or restricted.
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Runtime process data is still useful when WMI is unavailable or restricted.
+        }
+        catch (COMException)
         {
             // Runtime process data is still useful when WMI is unavailable or restricted.
         }
@@ -90,33 +118,54 @@ internal sealed class ProcessMetadataProvider
 
         try
         {
-            using var searcher = new ManagementObjectSearcher(
-                "SELECT Name,DisplayName,State,StartMode,PathName,ProcessId FROM Win32_Service");
-
-            foreach (ManagementObject service in searcher.Get())
+            var serviceBuckets = new Dictionary<int, List<ServiceInfo>>();
+            foreach (var chunk in ChunkProcessIds(processIds))
             {
-                using (service)
+                var whereClause = BuildProcessIdWhereClause(chunk);
+                using var searcher = new ManagementObjectSearcher(
+                    $"SELECT Name,DisplayName,State,StartMode,PathName,ProcessId FROM Win32_Service WHERE {whereClause}");
+
+                foreach (ManagementObject service in searcher.Get())
                 {
-                    var processId = Convert.ToInt32(service["ProcessId"]);
-                    if (!processIds.Contains(processId))
+                    using (service)
                     {
-                        continue;
+                        var processId = Convert.ToInt32(service["ProcessId"]);
+                        if (!processIds.Contains(processId))
+                        {
+                            continue;
+                        }
+
+                        if (!serviceBuckets.TryGetValue(processId, out var services))
+                        {
+                            services = GetOrCreate(metadata, processId).Services.ToList();
+                            serviceBuckets[processId] = services;
+                        }
+
+                        services.Add(new ServiceInfo(
+                            ReadString(service["Name"]) ?? "-",
+                            ReadString(service["DisplayName"]) ?? "-",
+                            ReadString(service["State"]) ?? "-",
+                            ReadString(service["StartMode"]) ?? "-",
+                            ReadString(service["PathName"]) ?? "-"));
                     }
-
-                    var existing = GetOrCreate(metadata, processId);
-                    var services = existing.Services.ToList();
-                    services.Add(new ServiceInfo(
-                        ReadString(service["Name"]) ?? "-",
-                        ReadString(service["DisplayName"]) ?? "-",
-                        ReadString(service["State"]) ?? "-",
-                        ReadString(service["StartMode"]) ?? "-",
-                        ReadString(service["PathName"]) ?? "-"));
-
-                    metadata[processId] = existing with { Services = services };
                 }
             }
+
+            foreach (var (processId, services) in serviceBuckets)
+            {
+                var existing = GetOrCreate(metadata, processId);
+                metadata[processId] = existing with { Services = services };
+            }
         }
-        catch
+        catch (ManagementException)
+        {
+            // svchost service details are best effort; do not fail the port scan.
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // svchost service details are best effort; do not fail the port scan.
+        }
+        catch (COMException)
         {
             // svchost service details are best effort; do not fail the port scan.
         }
@@ -145,7 +194,15 @@ internal sealed class ProcessMetadataProvider
         {
             return process.MainModule?.FileName;
         }
-        catch
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
+        catch (Win32Exception)
+        {
+            return null;
+        }
+        catch (NotSupportedException)
         {
             return null;
         }
@@ -167,9 +224,31 @@ internal sealed class ProcessMetadataProvider
 
             return string.IsNullOrWhiteSpace(domain) ? user : $@"{domain}\{user}";
         }
-        catch
+        catch (ManagementException)
         {
             return null;
         }
+        catch (UnauthorizedAccessException)
+        {
+            return null;
+        }
+        catch (COMException)
+        {
+            return null;
+        }
+        catch (InvalidCastException)
+        {
+            return null;
+        }
+    }
+
+    private static IEnumerable<int[]> ChunkProcessIds(IReadOnlySet<int> processIds)
+    {
+        return processIds.OrderBy(id => id).Chunk(WmiQueryChunkSize);
+    }
+
+    private static string BuildProcessIdWhereClause(IEnumerable<int> processIds)
+    {
+        return string.Join(" OR ", processIds.Select(id => $"ProcessId = {id}"));
     }
 }

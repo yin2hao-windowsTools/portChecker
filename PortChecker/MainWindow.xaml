@@ -344,6 +344,30 @@
                                            VerticalAlignment="Center" />
                             </Grid>
 
+                            <Border Background="#FFF7ED"
+                                    BorderBrush="#FED7AA"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Padding="10"
+                                    Margin="0,0,0,8"
+                                    Visibility="{Binding KillProcessWarningText, Converter={StaticResource StringToVisibilityConverter}}">
+                                <TextBlock Text="{Binding ServiceOperationRiskText}"
+                                           Foreground="#9A3412"
+                                           TextWrapping="Wrap" />
+                            </Border>
+
+                            <Border Background="#EEF6FF"
+                                    BorderBrush="#BFDBFE"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Padding="10"
+                                    Margin="0,0,0,8"
+                                    Visibility="{Binding ServiceOperationResult, Converter={StaticResource StringToVisibilityConverter}}">
+                                <TextBlock Text="{Binding ServiceOperationResult}"
+                                           Foreground="#1E40AF"
+                                           TextWrapping="Wrap" />
+                            </Border>
+
                             <ItemsControl ItemsSource="{Binding SelectedPort.Services}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
@@ -357,7 +381,7 @@
                                                 <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextWrapping="Wrap" />
                                                 <TextBlock Text="{Binding Name}" Foreground="{StaticResource MutedBrush}" Margin="0,2,0,6" />
                                                 <UniformGrid Columns="2">
-                                                    <TextBlock Text="{Binding State, StringFormat=状态：{0}}" Foreground="{StaticResource MutedBrush}" />
+                                                    <TextBlock Text="{Binding State, StringFormat=服务状态：{0}}" Foreground="{StaticResource MutedBrush}" />
                                                     <TextBlock Text="{Binding StartMode, StringFormat=启动：{0}}" Foreground="{StaticResource MutedBrush}" />
                                                 </UniformGrid>
                                                 <TextBlock Text="{Binding PathName}" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,6,0,0" />

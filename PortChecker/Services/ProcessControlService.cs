@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Management;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,6 +12,8 @@ namespace PortChecker.Services;
 internal sealed class ProcessControlService
 {
     private const string KillProcessArgument = "--kill-process";
+    private const string StopServiceArgument = "--stop-service";
+    private const string RestartServiceArgument = "--restart-service";
 
     public Task KillProcessAsync(int processId, CancellationToken cancellationToken)
     {
@@ -22,18 +25,32 @@ internal sealed class ProcessControlService
         }, cancellationToken);
     }
 
-    public async Task StopServiceAsync(string serviceName, CancellationToken cancellationToken)
+    public Task StopServiceAsync(string serviceName, CancellationToken cancellationToken)
     {
-        await InvokeServiceMethodAsync(serviceName, "StopService", cancellationToken);
-        await WaitForServiceStateAsync(serviceName, "Stopped", TimeSpan.FromSeconds(15), cancellationToken);
+        return Task.Run(() => StopServiceCore(serviceName, cancellationToken), cancellationToken);
     }
 
-    public async Task RestartServiceAsync(string serviceName, CancellationToken cancellationToken)
+    public Task RestartServiceAsync(string serviceName, CancellationToken cancellationToken)
     {
-        await InvokeServiceMethodAsync(serviceName, "StopService", cancellationToken);
-        await WaitForServiceStateAsync(serviceName, "Stopped", TimeSpan.FromSeconds(15), cancellationToken);
-        await InvokeServiceMethodAsync(serviceName, "StartService", cancellationToken);
-        await WaitForServiceStateAsync(serviceName, "Running", TimeSpan.FromSeconds(15), cancellationToken);
+        return Task.Run(() => RestartServiceCore(serviceName, cancellationToken), cancellationToken);
+    }
+
+    public Task StopServiceElevatedAsync(string serviceName, CancellationToken cancellationToken)
+    {
+        return RunElevatedServiceCommandAsync(
+            StopServiceArgument,
+            serviceName,
+            exitCode => GetElevatedServiceFailureMessage("停止", serviceName, exitCode),
+            cancellationToken);
+    }
+
+    public Task RestartServiceElevatedAsync(string serviceName, CancellationToken cancellationToken)
+    {
+        return RunElevatedServiceCommandAsync(
+            RestartServiceArgument,
+            serviceName,
+            exitCode => GetElevatedServiceFailureMessage("重启", serviceName, exitCode),
+            cancellationToken);
     }
 
     public Task KillProcessElevatedAsync(int processId, CancellationToken cancellationToken)
@@ -48,7 +65,7 @@ internal sealed class ProcessControlService
                 throw new ProcessControlException("无法定位当前程序，不能发起管理员权限操作。", false);
             }
 
-            using var process = StartElevatedHelper(executablePath, processId);
+            using var process = StartElevatedHelper(executablePath, KillProcessArgument, processId.ToString());
 
             if (process is null)
             {
@@ -65,25 +82,38 @@ internal sealed class ProcessControlService
 
     public static bool TryHandleElevatedCommand(string[] args)
     {
-        if (args.Length != 2
-            || !args[0].Equals(KillProcessArgument, StringComparison.OrdinalIgnoreCase)
-            || !int.TryParse(args[1], out var processId)
-            || processId <= 0)
+        if (args.Length != 2)
         {
             return false;
         }
 
-        try
+        var command = args[0];
+        var value = args[1];
+
+        if (command.Equals(KillProcessArgument, StringComparison.OrdinalIgnoreCase))
         {
-            TryKillProcess(processId, allowElevatedRetry: false);
-            Environment.ExitCode = 0;
-        }
-        catch
-        {
-            Environment.ExitCode = 1;
+            return HandleElevatedCommand(() =>
+            {
+                if (!int.TryParse(value, out var processId) || processId <= 0)
+                {
+                    throw new ProcessControlException("管理员权限操作参数无效。", false);
+                }
+
+                TryKillProcess(processId, allowElevatedRetry: false);
+            });
         }
 
-        return true;
+        if (command.Equals(StopServiceArgument, StringComparison.OrdinalIgnoreCase))
+        {
+            return HandleElevatedCommand(() => StopServiceCore(value, CancellationToken.None));
+        }
+
+        if (command.Equals(RestartServiceArgument, StringComparison.OrdinalIgnoreCase))
+        {
+            return HandleElevatedCommand(() => RestartServiceCore(value, CancellationToken.None));
+        }
+
+        return false;
     }
 
     public Task OpenFileLocationAsync(string filePath)
@@ -116,12 +146,71 @@ internal sealed class ProcessControlService
         });
     }
 
-    private static Task InvokeServiceMethodAsync(
+    private static bool HandleElevatedCommand(Action operation)
+    {
+        try
+        {
+            operation();
+            Environment.ExitCode = 0;
+        }
+        catch
+        {
+            Environment.ExitCode = 1;
+        }
+
+        return true;
+    }
+
+    private static Task RunElevatedServiceCommandAsync(
+        string commandArgument,
+        string serviceName,
+        Func<int, string> getFailureMessage,
+        CancellationToken cancellationToken)
+    {
+        return Task.Run(() =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ValidateServiceName(serviceName);
+
+            var executablePath = Environment.ProcessPath;
+            if (string.IsNullOrWhiteSpace(executablePath))
+            {
+                throw new ProcessControlException("无法定位当前程序，不能发起管理员权限操作。", false);
+            }
+
+            using var process = StartElevatedHelper(executablePath, commandArgument, serviceName);
+            if (process is null)
+            {
+                throw new ProcessControlException("管理员权限操作未能启动。", false);
+            }
+
+            process.WaitForExit();
+            if (process.ExitCode != 0)
+            {
+                throw new ProcessControlException(getFailureMessage(process.ExitCode), false);
+            }
+        }, cancellationToken);
+    }
+
+    private static void StopServiceCore(string serviceName, CancellationToken cancellationToken)
+    {
+        InvokeServiceMethod(serviceName, "StopService", cancellationToken);
+        WaitForServiceState(serviceName, "Stopped", TimeSpan.FromSeconds(15), cancellationToken);
+    }
+
+    private static void RestartServiceCore(string serviceName, CancellationToken cancellationToken)
+    {
+        StopServiceCore(serviceName, cancellationToken);
+        InvokeServiceMethod(serviceName, "StartService", cancellationToken);
+        WaitForServiceState(serviceName, "Running", TimeSpan.FromSeconds(15), cancellationToken);
+    }
+
+    private static void InvokeServiceMethod(
         string serviceName,
         string methodName,
         CancellationToken cancellationToken)
     {
-        return Task.Run(() =>
+        try
         {
             cancellationToken.ThrowIfCancellationRequested();
             ValidateServiceName(serviceName);
@@ -130,36 +219,45 @@ internal sealed class ProcessControlService
             var result = Convert.ToUInt32(service.InvokeMethod(methodName, null));
             if (result != 0)
             {
-                throw new ProcessControlException(GetServiceControlErrorMessage(result), result == 2);
+                throw new ProcessControlException(
+                    GetServiceControlErrorMessage(result),
+                    result == 2 && !PrivilegeService.IsRunningAsAdministrator());
             }
-        }, cancellationToken);
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            throw new ProcessControlException(
+                "访问被拒绝，请使用管理员权限运行。",
+                !PrivilegeService.IsRunningAsAdministrator(),
+                exception);
+        }
     }
 
-    private static Task WaitForServiceStateAsync(
+    private static void WaitForServiceState(
         string serviceName,
         string targetState,
         TimeSpan timeout,
         CancellationToken cancellationToken)
     {
-        return Task.Run(async () =>
+        var deadline = DateTimeOffset.Now + timeout;
+        while (DateTimeOffset.Now < deadline)
         {
-            var deadline = DateTimeOffset.Now + timeout;
-            while (DateTimeOffset.Now < deadline)
+            cancellationToken.ThrowIfCancellationRequested();
+
+            using var service = GetService(serviceName);
+            var state = service["State"]?.ToString();
+            if (targetState.Equals(state, StringComparison.OrdinalIgnoreCase))
             {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                using var service = GetService(serviceName);
-                var state = service["State"]?.ToString();
-                if (targetState.Equals(state, StringComparison.OrdinalIgnoreCase))
-                {
-                    return;
-                }
-
-                await Task.Delay(500, cancellationToken);
+                return;
             }
 
-            throw new TimeoutException($"等待服务进入 {targetState} 状态超时。");
-        }, cancellationToken);
+            if (cancellationToken.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(500)))
+            {
+                throw new OperationCanceledException(cancellationToken);
+            }
+        }
+
+        throw new TimeoutException($"等待服务进入 {targetState} 状态超时。");
     }
 
     private static ManagementObject GetService(string serviceName)
@@ -214,19 +312,21 @@ internal sealed class ProcessControlService
         }
     }
 
-    private static Process? StartElevatedHelper(string executablePath, int processId)
+    private static Process? StartElevatedHelper(string executablePath, string commandArgument, string commandValue)
     {
         try
         {
-            return Process.Start(new ProcessStartInfo
+            var startInfo = new ProcessStartInfo
             {
                 FileName = executablePath,
-                Arguments = $"{KillProcessArgument} {processId}",
+                Arguments = $"{commandArgument} {QuoteArgument(commandValue)}",
                 UseShellExecute = true,
                 Verb = "runas",
                 WindowStyle = ProcessWindowStyle.Hidden,
                 WorkingDirectory = Path.GetDirectoryName(executablePath) ?? Environment.CurrentDirectory
-            });
+            };
+
+            return Process.Start(startInfo);
         }
         catch (Win32Exception exception) when (exception.NativeErrorCode == 1223)
         {
@@ -237,6 +337,38 @@ internal sealed class ProcessControlService
     private static bool IsAccessDenied(Win32Exception exception)
     {
         return exception.NativeErrorCode is 5 or 740;
+    }
+
+    private static string QuoteArgument(string argument)
+    {
+        var builder = new StringBuilder(argument.Length + 2);
+        builder.Append('"');
+
+        var backslashCount = 0;
+        foreach (var character in argument)
+        {
+            if (character == '\\')
+            {
+                backslashCount++;
+                continue;
+            }
+
+            if (character == '"')
+            {
+                builder.Append('\\', (backslashCount * 2) + 1);
+                builder.Append('"');
+                backslashCount = 0;
+                continue;
+            }
+
+            builder.Append('\\', backslashCount);
+            builder.Append(character);
+            backslashCount = 0;
+        }
+
+        builder.Append('\\', backslashCount * 2);
+        builder.Append('"');
+        return builder.ToString();
     }
 
     private static string GetServiceControlErrorMessage(uint returnCode)
@@ -277,6 +409,15 @@ internal sealed class ProcessControlService
         {
             1 => "管理员权限操作未能结束该进程，进程可能已经退出或受系统保护。",
             _ => $"管理员权限操作失败，退出码 {exitCode}。"
+        };
+    }
+
+    private static string GetElevatedServiceFailureMessage(string actionText, string serviceName, int exitCode)
+    {
+        return exitCode switch
+        {
+            1 => $"管理员权限操作未能{actionText}服务 {serviceName}，服务可能已改变状态、存在依赖限制或受系统保护。",
+            _ => $"管理员权限{actionText}服务 {serviceName} 失败，退出码 {exitCode}。"
         };
     }
 }

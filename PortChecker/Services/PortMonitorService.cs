@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,40 +17,102 @@ internal sealed class PortMonitorService
     {
         return Task.Run(() =>
         {
+            var scannedAt = DateTimeOffset.Now;
+            var isElevated = PrivilegeService.IsRunningAsAdministrator();
+            var scanTotalStopwatch = Stopwatch.StartNew();
+            TimeSpan snapshotDuration = TimeSpan.Zero;
+            TimeSpan metadataDuration = TimeSpan.Zero;
+            TimeSpan entryProjectionDuration = TimeSpan.Zero;
+            var snapshotCount = 0;
+            var distinctProcessCount = 0;
+
             cancellationToken.ThrowIfCancellationRequested();
 
             try
             {
-                var isElevated = PrivilegeService.IsRunningAsAdministrator();
-                var snapshots = _nativePortScanner.GetActivePorts()
-                    .OrderBy(snapshot => snapshot.Protocol)
-                    .ThenBy(snapshot => snapshot.LocalPort)
-                    .ThenBy(snapshot => snapshot.LocalAddress)
-                    .ToList();
+                var snapshotStopwatch = Stopwatch.StartNew();
+                var activePorts = _nativePortScanner.GetActivePorts();
+                var snapshots = activePorts as List<PortSnapshot> ?? activePorts.ToList();
+                snapshots.Sort(CompareSnapshots);
+                snapshotStopwatch.Stop();
+
+                snapshotCount = snapshots.Count;
+                snapshotDuration = snapshotStopwatch.Elapsed;
 
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var metadata = _processMetadataProvider.GetMetadata(snapshots.Select(snapshot => snapshot.ProcessId));
+                var processIds = snapshots
+                    .Select(snapshot => snapshot.ProcessId)
+                    .Where(processId => processId > 0)
+                    .Distinct()
+                    .ToArray();
+
+                distinctProcessCount = processIds.Length;
+
+                var metadataStopwatch = Stopwatch.StartNew();
+                var metadata = _processMetadataProvider.GetMetadata(processIds);
+                metadataStopwatch.Stop();
+                metadataDuration = metadataStopwatch.Elapsed;
+
+                var entryProjectionStopwatch = Stopwatch.StartNew();
                 var entries = snapshots.Select(snapshot => BuildEntry(snapshot, metadata)).ToList();
+                entryProjectionStopwatch.Stop();
+                entryProjectionDuration = entryProjectionStopwatch.Elapsed;
+
+                scanTotalStopwatch.Stop();
+                var metrics = new ScanMetrics(
+                    snapshotDuration,
+                    metadataDuration,
+                    entryProjectionDuration,
+                    scanTotalStopwatch.Elapsed,
+                    snapshotCount,
+                    distinctProcessCount);
 
                 return new PortScanResult(
                     entries,
-                    DateTimeOffset.Now,
+                    scannedAt,
                     isElevated,
                     null,
-                    GetPermissionNotice(isElevated));
+                    GetPermissionNotice(isElevated),
+                    metrics);
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
-                var isElevated = PrivilegeService.IsRunningAsAdministrator();
+                scanTotalStopwatch.Stop();
+                var metrics = new ScanMetrics(
+                    snapshotDuration,
+                    metadataDuration,
+                    entryProjectionDuration,
+                    scanTotalStopwatch.Elapsed,
+                    snapshotCount,
+                    distinctProcessCount);
+
                 return new PortScanResult(
                     Array.Empty<PortEntry>(),
-                    DateTimeOffset.Now,
+                    scannedAt,
                     isElevated,
-                    exception.Message,
-                    GetPermissionNotice(isElevated));
+                    $"扫描失败（{exception.GetType().Name}）：{exception.Message}",
+                    GetPermissionNotice(isElevated),
+                    metrics);
             }
         }, cancellationToken);
+    }
+
+    private static int CompareSnapshots(PortSnapshot left, PortSnapshot right)
+    {
+        var protocolComparison = left.Protocol.CompareTo(right.Protocol);
+        if (protocolComparison != 0)
+        {
+            return protocolComparison;
+        }
+
+        var localPortComparison = left.LocalPort.CompareTo(right.LocalPort);
+        if (localPortComparison != 0)
+        {
+            return localPortComparison;
+        }
+
+        return StringComparer.Ordinal.Compare(left.LocalAddress, right.LocalAddress);
     }
 
     private static PortEntry BuildEntry(PortSnapshot snapshot, IReadOnlyDictionary<int, ProcessMetadata> metadata)
