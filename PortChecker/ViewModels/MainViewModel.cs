@@ -33,7 +33,9 @@ internal sealed class MainViewModel : ObservableObject
         PortsView.SortDescriptions.Add(new SortDescription(nameof(PortEntry.LocalPort), ListSortDirection.Ascending));
 
         RefreshCommand = new AsyncRelayCommand(RefreshAsync, () => !IsRefreshing);
-        KillProcessCommand = new AsyncRelayCommand(KillSelectedProcessAsync, () => SelectedPort is not null && SelectedPort.ProcessId > 0);
+        KillProcessCommand = new AsyncRelayCommand(KillSelectedProcessAsync, () => CanKillSelectedProcess);
+        StopServiceCommand = new AsyncRelayCommand(StopServiceAsync, CanControlService);
+        RestartServiceCommand = new AsyncRelayCommand(RestartServiceAsync, CanControlService);
         OpenLocationCommand = new AsyncRelayCommand(OpenLocationAsync, () => !string.IsNullOrWhiteSpace(SelectedPort?.ProcessPath));
         OpenTaskManagerCommand = new AsyncRelayCommand(() => _processControlService.OpenTaskManagerAsync());
         ClearSearchCommand = new RelayCommand(() => SearchText = string.Empty, () => !string.IsNullOrWhiteSpace(SearchText));
@@ -49,7 +51,19 @@ internal sealed class MainViewModel : ObservableObject
 
     public AsyncRelayCommand KillProcessCommand { get; }
 
+    public AsyncRelayCommand StopServiceCommand { get; }
+
+    public AsyncRelayCommand RestartServiceCommand { get; }
+
     public AsyncRelayCommand OpenLocationCommand { get; }
+
+    public bool CanKillSelectedProcess => SelectedPort is { ProcessId: > 0, IsSvchost: false };
+
+    public string KillProcessWarningText => SelectedPort is { IsSvchost: true }
+        ? SelectedPort.Services.Count > 0
+            ? "该 PID 是 svchost，请优先停止或重启下方具体服务，避免影响同一宿主中的其他服务。"
+            : "该 PID 是 svchost，但当前未解析到服务；为避免误杀宿主进程，已禁用结束进程。请使用管理员权限刷新后按服务操作。"
+        : string.Empty;
 
     public AsyncRelayCommand OpenTaskManagerCommand { get; }
 
@@ -104,7 +118,11 @@ internal sealed class MainViewModel : ObservableObject
             {
                 KillProcessCommand.RaiseCanExecuteChanged();
                 OpenLocationCommand.RaiseCanExecuteChanged();
+                StopServiceCommand.RaiseCanExecuteChanged();
+                RestartServiceCommand.RaiseCanExecuteChanged();
                 OnPropertyChanged(nameof(SelectedServicesCount));
+                OnPropertyChanged(nameof(CanKillSelectedProcess));
+                OnPropertyChanged(nameof(KillProcessWarningText));
             }
         }
     }
@@ -223,12 +241,18 @@ internal sealed class MainViewModel : ObservableObject
         }
 
         var selected = SelectedPort;
-        var serviceText = selected.IsSvchost && selected.Services.Count > 0
-            ? $"{Environment.NewLine}{Environment.NewLine}该 svchost 当前承载服务：{string.Join(", ", selected.Services.Select(service => service.Name))}"
-            : string.Empty;
+        if (selected.IsSvchost)
+        {
+            MessageBox.Show(
+                KillProcessWarningText,
+                "请按服务操作",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
 
         var result = MessageBox.Show(
-            $"确定要结束进程 {selected.ProcessName} (PID {selected.ProcessId}) 吗？{serviceText}",
+            $"确定要结束进程 {selected.ProcessName} (PID {selected.ProcessId}) 吗？",
             "结束进程",
             MessageBoxButton.YesNo,
             MessageBoxImage.Warning,
@@ -250,6 +274,69 @@ internal sealed class MainViewModel : ObservableObject
         {
             StatusMessage = $"结束进程失败：{exception.Message}";
             MessageBox.Show(StatusMessage, "操作失败", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private async Task StopServiceAsync(object? parameter)
+    {
+        if (parameter is not ServiceInfo service)
+        {
+            return;
+        }
+
+        var result = MessageBox.Show(
+            $"确定要停止服务 {service.DisplayLabel} 吗？{Environment.NewLine}{Environment.NewLine}只会向该服务发送停止请求，不会结束承载它的 svchost 进程。",
+            "停止服务",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning,
+            MessageBoxResult.No);
+
+        if (result != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        await ControlServiceAsync(service, "停止", token => _processControlService.StopServiceAsync(service.Name, token));
+    }
+
+    private async Task RestartServiceAsync(object? parameter)
+    {
+        if (parameter is not ServiceInfo service)
+        {
+            return;
+        }
+
+        var result = MessageBox.Show(
+            $"确定要重启服务 {service.DisplayLabel} 吗？{Environment.NewLine}{Environment.NewLine}会先停止该服务，等待停止完成后再启动；不会结束承载它的 svchost 进程。",
+            "重启服务",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning,
+            MessageBoxResult.No);
+
+        if (result != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        await ControlServiceAsync(service, "重启", token => _processControlService.RestartServiceAsync(service.Name, token));
+    }
+
+    private async Task ControlServiceAsync(
+        ServiceInfo service,
+        string actionText,
+        Func<CancellationToken, Task> operation)
+    {
+        try
+        {
+            StatusMessage = $"正在{actionText}服务 {service.Name}...";
+            await operation(CancellationToken.None);
+            StatusMessage = $"已{actionText}服务 {service.Name}，正在刷新...";
+            await RefreshAsync();
+        }
+        catch (Exception exception)
+        {
+            StatusMessage = $"{actionText}服务 {service.Name} 失败：{exception.Message}";
+            MessageBox.Show(StatusMessage, "服务操作失败", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -306,6 +393,11 @@ internal sealed class MainViewModel : ObservableObject
             || port.Services.Any(service => Contains(service.Name, keyword) || Contains(service.DisplayName, keyword));
     }
 
+    private static bool CanControlService(object? parameter)
+    {
+        return parameter is ServiceInfo { CanControl: true, IsRunning: true };
+    }
+
     private static bool Contains(string? source, string keyword)
     {
         return source?.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0;
@@ -319,5 +411,7 @@ internal sealed class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(SvchostCount));
         OnPropertyChanged(nameof(FilteredCount));
         OnPropertyChanged(nameof(SelectedServicesCount));
+        OnPropertyChanged(nameof(CanKillSelectedProcess));
+        OnPropertyChanged(nameof(KillProcessWarningText));
     }
 }

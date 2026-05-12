@@ -361,6 +361,19 @@
                                                     <TextBlock Text="{Binding StartMode, StringFormat=启动：{0}}" Foreground="{StaticResource MutedBrush}" />
                                                 </UniformGrid>
                                                 <TextBlock Text="{Binding PathName}" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,6,0,0" />
+                                                <StackPanel Orientation="Horizontal"
+                                                            HorizontalAlignment="Right"
+                                                            Margin="0,10,0,0">
+                                                    <Button Content="停止服务"
+                                                            Command="{Binding DataContext.StopServiceCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}"
+                                                            Style="{StaticResource DangerButton}"
+                                                            Margin="0,0,8,0" />
+                                                    <Button Content="重启服务"
+                                                            Command="{Binding DataContext.RestartServiceCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}"
+                                                            Style="{StaticResource SecondaryButton}" />
+                                                </StackPanel>
                                             </StackPanel>
                                         </Border>
                                     </DataTemplate>
@@ -369,9 +382,23 @@
                         </StackPanel>
                     </ScrollViewer>
 
-                    <StackPanel Grid.Row="2" Margin="18" Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="定位文件" Command="{Binding OpenLocationCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" />
-                        <Button Content="结束进程" Command="{Binding KillProcessCommand}" Style="{StaticResource DangerButton}" />
+                    <StackPanel Grid.Row="2" Margin="18">
+                        <TextBlock Text="{Binding KillProcessWarningText}"
+                                   Foreground="{StaticResource DangerBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,10"
+                                   Visibility="{Binding KillProcessWarningText, Converter={StaticResource StringToVisibilityConverter}}" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="定位文件" Command="{Binding OpenLocationCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" />
+                            <Button Content="结束进程"
+                                    Command="{Binding KillProcessCommand}"
+                                    Style="{StaticResource DangerButton}"
+                                    Visibility="{Binding CanKillSelectedProcess, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            <Button Content="按服务操作"
+                                    Style="{StaticResource SecondaryButton}"
+                                    IsEnabled="False"
+                                    Visibility="{Binding KillProcessWarningText, Converter={StaticResource StringToVisibilityConverter}}" />
+                        </StackPanel>
                     </StackPanel>
                 </Grid>
             </Border>
