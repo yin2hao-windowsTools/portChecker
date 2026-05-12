@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
 using PortChecker.Models;
@@ -21,6 +20,7 @@ internal sealed class PortMonitorService
 
             try
             {
+                var isElevated = PrivilegeService.IsRunningAsAdministrator();
                 var snapshots = _nativePortScanner.GetActivePorts()
                     .OrderBy(snapshot => snapshot.Protocol)
                     .ThenBy(snapshot => snapshot.LocalPort)
@@ -35,16 +35,19 @@ internal sealed class PortMonitorService
                 return new PortScanResult(
                     entries,
                     DateTimeOffset.Now,
-                    IsRunningAsAdministrator(),
-                    null);
+                    isElevated,
+                    null,
+                    GetPermissionNotice(isElevated));
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
+                var isElevated = PrivilegeService.IsRunningAsAdministrator();
                 return new PortScanResult(
                     Array.Empty<PortEntry>(),
                     DateTimeOffset.Now,
-                    IsRunningAsAdministrator(),
-                    exception.Message);
+                    isElevated,
+                    exception.Message,
+                    GetPermissionNotice(isElevated));
             }
         }, cancellationToken);
     }
@@ -86,10 +89,10 @@ internal sealed class PortMonitorService
             : processName;
     }
 
-    private static bool IsRunningAsAdministrator()
+    private static string GetPermissionNotice(bool isElevated)
     {
-        using var identity = WindowsIdentity.GetCurrent();
-        var principal = new WindowsPrincipal(identity);
-        return principal.IsInRole(WindowsBuiltInRole.Administrator);
+        return isElevated
+            ? "管理员权限：可读取更多进程路径、命令行和服务详情。"
+            : "普通权限：端口和 PID 可正常查看；部分系统进程的路径、命令行、服务详情可能受限，高风险操作会按需请求管理员权限。";
     }
 }

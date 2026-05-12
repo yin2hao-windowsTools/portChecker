@@ -1,6 +1,5 @@
-﻿using System.Configuration;
-using System.Data;
 using System.Windows;
+using PortChecker.Services;
 
 namespace PortChecker;
 
@@ -9,5 +8,16 @@ namespace PortChecker;
 /// </summary>
 public partial class App : Application
 {
-}
+    private void ApplicationStartup(object sender, StartupEventArgs e)
+    {
+        if (ProcessControlService.TryHandleElevatedCommand(e.Args))
+        {
+            Shutdown(Environment.ExitCode);
+            return;
+        }
 
+        var window = new MainWindow();
+        MainWindow = window;
+        window.Show();
+    }
+}

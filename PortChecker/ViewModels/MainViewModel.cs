@@ -23,6 +23,7 @@ internal sealed class MainViewModel : ObservableObject
     private PortEntry? _selectedPort;
     private bool _isRefreshing;
     private string _statusMessage = "准备扫描端口";
+    private string _permissionNotice = "普通权限：端口和 PID 可正常查看；部分系统进程详情可能受限，高风险操作会按需请求管理员权限。";
     private DateTimeOffset? _lastScannedAt;
     private bool _isElevated;
 
@@ -145,6 +146,12 @@ internal sealed class MainViewModel : ObservableObject
         private set => SetProperty(ref _statusMessage, value);
     }
 
+    public string PermissionNotice
+    {
+        get => _permissionNotice;
+        private set => SetProperty(ref _permissionNotice, value);
+    }
+
     public DateTimeOffset? LastScannedAt
     {
         get => _lastScannedAt;
@@ -183,7 +190,7 @@ internal sealed class MainViewModel : ObservableObject
 
     public string LastScannedText => LastScannedAt is null ? "尚未扫描" : LastScannedAt.Value.ToString("yyyy-MM-dd HH:mm:ss");
 
-    public string ElevationText => IsElevated ? "管理员权限" : "普通权限";
+    public string ElevationText => IsElevated ? "管理员权限" : "普通权限 - 按需提权";
 
     public async Task InitializeAsync()
     {
@@ -215,12 +222,13 @@ internal sealed class MainViewModel : ObservableObject
 
             LastScannedAt = result.ScannedAt;
             IsElevated = result.IsElevated;
+            PermissionNotice = result.PermissionNotice ?? PermissionNotice;
             SelectedPort = _ports.FirstOrDefault();
             PortsView.Refresh();
             RaiseCountProperties();
 
             StatusMessage = result.Warning is null
-                ? $"扫描完成，发现 {_ports.Count} 个端口占用"
+                ? $"扫描完成，发现 {_ports.Count} 个端口占用。{PermissionNotice}"
                 : $"扫描失败：{result.Warning}";
         }
         catch (OperationCanceledException)
@@ -269,6 +277,34 @@ internal sealed class MainViewModel : ObservableObject
             await _processControlService.KillProcessAsync(selected.ProcessId, CancellationToken.None);
             StatusMessage = $"已结束 PID {selected.ProcessId}，正在刷新...";
             await RefreshAsync();
+        }
+        catch (ProcessControlException exception) when (exception.CanRetryElevated)
+        {
+            var elevateResult = MessageBox.Show(
+                $"{exception.Message}{Environment.NewLine}{Environment.NewLine}是否以管理员权限重试结束 PID {selected.ProcessId}？",
+                "需要管理员权限",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning,
+                MessageBoxResult.No);
+
+            if (elevateResult != MessageBoxResult.Yes)
+            {
+                StatusMessage = $"结束进程受限：{exception.Message}";
+                return;
+            }
+
+            try
+            {
+                StatusMessage = $"正在请求管理员权限结束 PID {selected.ProcessId}...";
+                await _processControlService.KillProcessElevatedAsync(selected.ProcessId, CancellationToken.None);
+                StatusMessage = $"已结束 PID {selected.ProcessId}，正在刷新...";
+                await RefreshAsync();
+            }
+            catch (Exception elevatedException)
+            {
+                StatusMessage = $"管理员权限结束进程失败：{elevatedException.Message}";
+                MessageBox.Show(StatusMessage, "操作失败", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
         catch (Exception exception)
         {
