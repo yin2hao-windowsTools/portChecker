@@ -1,0 +1,133 @@
+name: Build tagged release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tagged-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-windows:
+    name: Build EXE, MSI and portable packages
+    runs-on: windows-latest
+
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      DOTNET_NOLOGO: '1'
+      PROJECT_PATH: PortChecker/PortChecker.csproj
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Parse release tag
+        id: release
+        shell: pwsh
+        run: |
+          $tagName = '${{ github.ref_name }}'
+          if ($tagName -notmatch '^v(?<number>[0-9]+(?:\.[0-9]+)*)(?<suffix>-[0-9A-Za-z][0-9A-Za-z.-]*)?$') {
+            throw "Tag '$tagName' is invalid. Expected v + dot-separated numeric version, optionally followed by a prerelease suffix such as v0.0.7-alpha."
+          }
+
+          $versionParts = $Matches['number'].Split('.')
+          while ($versionParts.Count -lt 3) {
+            $versionParts += '0'
+          }
+
+          if ($versionParts.Count -gt 3) {
+            $versionParts = $versionParts[0..2]
+          }
+
+          $productVersion = $versionParts -join '.'
+          $suffix = $Matches['suffix']
+          $displayVersion = "$productVersion$suffix"
+          $isPrerelease = -not [string]::IsNullOrWhiteSpace($suffix)
+
+          "tag_name=$tagName" >> $env:GITHUB_OUTPUT
+          "product_version=$productVersion" >> $env:GITHUB_OUTPUT
+          "display_version=$displayVersion" >> $env:GITHUB_OUTPUT
+          "is_prerelease=$($isPrerelease.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+          "asset_prefix=PortChecker-$displayVersion-win-x64" >> $env:GITHUB_OUTPUT
+
+          Write-Host "Tag: $tagName"
+          Write-Host "Normalized product version: $productVersion"
+          Write-Host "Display version: $displayVersion"
+          Write-Host "Prerelease: $isPrerelease"
+
+      - name: Restore
+        run: dotnet restore $env:PROJECT_PATH
+
+      - name: Build
+        shell: pwsh
+        run: |
+          $assemblyVersion = '${{ steps.release.outputs.product_version }}.0'
+          dotnet build $env:PROJECT_PATH `
+            --configuration Release `
+            --no-restore `
+            -p:Version='${{ steps.release.outputs.display_version }}' `
+            -p:AssemblyVersion=$assemblyVersion `
+            -p:FileVersion=$assemblyVersion `
+            -p:InformationalVersion='${{ steps.release.outputs.display_version }}'
+
+      - name: Package
+        shell: pwsh
+        run: |
+          .\.github\scripts\pack-release.ps1 `
+            -ProjectPath $env:PROJECT_PATH `
+            -Version '${{ steps.release.outputs.display_version }}' `
+            -ProductVersion '${{ steps.release.outputs.product_version }}' `
+            -Configuration Release `
+            -Runtime win-x64 `
+            -OutputRoot artifacts
+
+      - name: Upload test build artifact
+        if: steps.release.outputs.is_prerelease == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.release.outputs.asset_prefix }}
+          path: artifacts/dist/*
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish GitHub release
+        if: steps.release.outputs.is_prerelease == 'false'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tagName = '${{ steps.release.outputs.tag_name }}'
+          $displayVersion = '${{ steps.release.outputs.display_version }}'
+          $assets = Get-ChildItem -LiteralPath artifacts/dist -File | ForEach-Object { $_.FullName }
+
+          if ($assets.Count -eq 0) {
+            throw "No release assets were produced."
+          }
+
+          $notes = @"
+          Automated build for $tagName.
+
+          Version normalization: $displayVersion
+          Packages:
+          - EXE
+          - MSI
+          - portable ZIP
+          "@
+
+          gh release view $tagName *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tagName --clobber $assets
+          }
+          else {
+            gh release create $tagName $assets --title "PortChecker v$displayVersion" --notes $notes --verify-tag
+          }
