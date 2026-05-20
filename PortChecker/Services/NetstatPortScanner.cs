@@ -115,7 +115,7 @@ internal sealed class NetstatPortScanner
             StartInfo = new ProcessStartInfo
             {
                 FileName = executablePath,
-                Arguments = "-ano",
+                Arguments = "-anoq",
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,

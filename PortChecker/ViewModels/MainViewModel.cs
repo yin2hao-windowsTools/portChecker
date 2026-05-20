@@ -57,7 +57,7 @@ internal sealed class MainViewModel : ObservableObject
 
     public IReadOnlyList<string> ProtocolFilters { get; } = ["全部", "TCP", "UDP"];
 
-    public IReadOnlyList<string> StateFilters { get; } = ["全部", "LISTENING", "ESTABLISHED", "TIME_WAIT", "UDP"];
+    public IReadOnlyList<string> StateFilters { get; } = ["全部", "LISTENING", "BOUND", "ESTABLISHED", "TIME_WAIT", "UDP"];
 
     public AsyncRelayCommand RefreshCommand { get; }
 

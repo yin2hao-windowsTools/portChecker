@@ -33,10 +33,7 @@ internal sealed class NativePortScanner
         AddRows("UDP IPv4", GetUdp4Rows, ports, warnings);
         AddRows("UDP IPv6", GetUdp6Rows, ports, warnings);
 
-        if (ports.Count == 0 || warnings.Count > 0)
-        {
-            TryMergeFallbackRows(ports, warnings);
-        }
+        TryMergeFallbackRows(ports, warnings, reportSupplement: ports.Count == 0 || warnings.Count > 0);
 
         return new NativePortScanResult(
             ports,
@@ -72,7 +69,10 @@ internal sealed class NativePortScanner
             or InvalidOperationException;
     }
 
-    private void TryMergeFallbackRows(List<PortSnapshot> ports, ICollection<string> warnings)
+    private void TryMergeFallbackRows(
+        List<PortSnapshot> ports,
+        ICollection<string> warnings,
+        bool reportSupplement)
     {
         try
         {
@@ -80,7 +80,11 @@ internal sealed class NativePortScanner
             var fallbackPorts = _fallbackScanner.GetActivePorts();
             if (fallbackPorts.Count == 0)
             {
-                warnings.Add("netstat 兜底扫描未返回端口");
+                if (reportSupplement)
+                {
+                    warnings.Add("netstat 兜底扫描未返回端口");
+                }
+
                 return;
             }
 
@@ -97,6 +101,11 @@ internal sealed class NativePortScanner
                 addedCount++;
             }
 
+            if (!reportSupplement)
+            {
+                return;
+            }
+
             if (originalCount == 0)
             {
                 warnings.Add("原生端口表读取为空，已使用 netstat 兜底结果");
@@ -108,7 +117,10 @@ internal sealed class NativePortScanner
         }
         catch (Exception exception) when (IsRecoverableFallbackFailure(exception))
         {
-            warnings.Add($"netstat 兜底扫描失败（{exception.GetType().Name}）：{exception.Message}");
+            if (reportSupplement)
+            {
+                warnings.Add($"netstat 兜底扫描失败（{exception.GetType().Name}）：{exception.Message}");
+            }
         }
     }
 
