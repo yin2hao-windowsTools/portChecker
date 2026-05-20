@@ -32,7 +32,7 @@ internal sealed class PortMonitorService
             {
                 var snapshotStopwatch = Stopwatch.StartNew();
                 var portScan = _nativePortScanner.ScanActivePorts();
-                var snapshots = portScan.Ports as List<PortSnapshot> ?? portScan.Ports.ToList();
+                var snapshots = portScan.Ports.Distinct().ToList();
                 snapshots.Sort(CompareSnapshots);
                 snapshotStopwatch.Stop();
 
