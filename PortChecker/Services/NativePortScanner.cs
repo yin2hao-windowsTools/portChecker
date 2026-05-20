@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
+using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
 using PortChecker.Models;
@@ -14,6 +16,7 @@ internal sealed class NativePortScanner
     private const int ErrorInsufficientBuffer = 122;
     private const int NoError = 0;
     private const int MaxTableReadAttempts = 4;
+    private readonly NetstatPortScanner _fallbackScanner = new();
 
     public IReadOnlyList<PortSnapshot> GetActivePorts()
     {
@@ -30,11 +33,16 @@ internal sealed class NativePortScanner
         AddRows("UDP IPv4", GetUdp4Rows, ports, warnings);
         AddRows("UDP IPv6", GetUdp6Rows, ports, warnings);
 
+        if (ports.Count == 0 || warnings.Count > 0)
+        {
+            TryMergeFallbackRows(ports, warnings);
+        }
+
         return new NativePortScanResult(
             ports,
             warnings.Count == 0
                 ? null
-                : $"部分端口表读取失败：{string.Join("；", warnings)}");
+                : string.Join("；", warnings));
     }
 
     private static void AddRows(
@@ -62,6 +70,66 @@ internal sealed class NativePortScanner
             or ExternalException
             or ArgumentException
             or InvalidOperationException;
+    }
+
+    private void TryMergeFallbackRows(List<PortSnapshot> ports, ICollection<string> warnings)
+    {
+        try
+        {
+            var originalCount = ports.Count;
+            var fallbackPorts = _fallbackScanner.GetActivePorts();
+            if (fallbackPorts.Count == 0)
+            {
+                warnings.Add("netstat 兜底扫描未返回端口");
+                return;
+            }
+
+            var knownRows = ports.Select(GetSnapshotKey).ToHashSet();
+            var addedCount = 0;
+            foreach (var fallbackPort in fallbackPorts)
+            {
+                if (!knownRows.Add(GetSnapshotKey(fallbackPort)))
+                {
+                    continue;
+                }
+
+                ports.Add(fallbackPort);
+                addedCount++;
+            }
+
+            if (originalCount == 0)
+            {
+                warnings.Add("原生端口表读取为空，已使用 netstat 兜底结果");
+            }
+            else if (addedCount > 0)
+            {
+                warnings.Add($"已从 netstat 兜底补充 {addedCount} 条端口记录");
+            }
+        }
+        catch (Exception exception) when (IsRecoverableFallbackFailure(exception))
+        {
+            warnings.Add($"netstat 兜底扫描失败（{exception.GetType().Name}）：{exception.Message}");
+        }
+    }
+
+    private static bool IsRecoverableFallbackFailure(Exception exception)
+    {
+        return exception is Win32Exception
+            or IOException
+            or TimeoutException
+            or InvalidOperationException;
+    }
+
+    private static SnapshotKey GetSnapshotKey(PortSnapshot snapshot)
+    {
+        return new SnapshotKey(
+            snapshot.Protocol,
+            snapshot.LocalAddress,
+            snapshot.LocalPort,
+            snapshot.RemoteAddress,
+            snapshot.RemotePort,
+            snapshot.State,
+            snapshot.ProcessId);
     }
 
     private static IReadOnlyList<PortSnapshot> GetTcp4Rows()
@@ -285,6 +353,15 @@ internal sealed class NativePortScanner
     {
         OwnerPid = 1
     }
+
+    private sealed record SnapshotKey(
+        PortProtocol Protocol,
+        string LocalAddress,
+        int LocalPort,
+        string RemoteAddress,
+        int? RemotePort,
+        string State,
+        int ProcessId);
 
     [StructLayout(LayoutKind.Sequential)]
     private struct MibTcpRowOwnerPid
