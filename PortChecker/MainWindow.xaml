@@ -16,11 +16,17 @@
         <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
         <converters:StringToVisibilityConverter x:Key="EmptyStringToVisibilityConverter" Invert="True" />
 
-        <SolidColorBrush x:Key="InkBrush" Color="#182230" />
+        <SolidColorBrush x:Key="InkBrush" Color="#111827" />
         <SolidColorBrush x:Key="MutedBrush" Color="#667085" />
-        <SolidColorBrush x:Key="LineBrush" Color="#E4E7EC" />
+        <SolidColorBrush x:Key="LineBrush" Color="#D9E2EF" />
         <SolidColorBrush x:Key="PanelBrush" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="PanelAltBrush" Color="#F8FAFD" />
+        <SolidColorBrush x:Key="HoverBrush" Color="#F1F7FF" />
+        <SolidColorBrush x:Key="SelectedBrush" Color="#E8F1FF" />
         <SolidColorBrush x:Key="AccentBrush" Color="#2563EB" />
+        <SolidColorBrush x:Key="AccentSoftBrush" Color="#EAF1FF" />
+        <SolidColorBrush x:Key="SuccessBrush" Color="#059669" />
+        <SolidColorBrush x:Key="WarningBrush" Color="#B45309" />
         <SolidColorBrush x:Key="DangerBrush" Color="#DC2626" />
 
         <Style x:Key="CardBorder" TargetType="Border">
@@ -28,22 +34,34 @@
             <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="18" />
+            <Setter Property="Padding" Value="16" />
             <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#101828" BlurRadius="14" ShadowDepth="1" Opacity="0.06" />
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style x:Key="PrimaryButton" TargetType="Button">
             <Setter Property="MinHeight" Value="36" />
             <Setter Property="Padding" Value="16,7" />
-            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="Background" Value="{StaticResource AccentBrush}" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="True">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                     </ControlTemplate>
@@ -62,7 +80,8 @@
 
         <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
             <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
-            <Setter Property="Background" Value="#EEF2F8" />
+            <Setter Property="Background" Value="#F3F6FB" />
+            <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#E2E8F0" />
@@ -72,6 +91,7 @@
 
         <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
             <Setter Property="Background" Value="{StaticResource DangerBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#B91C1C" />
@@ -84,8 +104,9 @@
             <Setter Property="Padding" Value="12,7" />
             <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Background" Value="White" />
+            <Setter Property="Background" Value="#FDFEFF" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="CaretBrush" Value="{StaticResource AccentBrush}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
@@ -98,6 +119,11 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
         <Style x:Key="ComboBoxStyle" TargetType="ComboBox">
@@ -106,8 +132,45 @@
             <Setter Property="Padding" Value="10,6" />
             <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Background" Value="White" />
+            <Setter Property="Background" Value="#FDFEFF" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="MetricLabelText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <Style x:Key="MetricValueText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+            <Setter Property="FontSize" Value="28" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,5,0,0" />
+        </Style>
+
+        <Style x:Key="PanelTitleText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style x:Key="FieldLabelText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+
+        <Style x:Key="FieldValueText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,0,0,14" />
+        </Style>
+
+        <Style x:Key="MonoTableText" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Cascadia Mono, Consolas" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
         </Style>
 
         <Style TargetType="TextBlock">
@@ -119,21 +182,22 @@
             <Setter Property="AutoGenerateColumns" Value="False" />
             <Setter Property="CanUserAddRows" Value="False" />
             <Setter Property="CanUserDeleteRows" Value="False" />
-            <Setter Property="GridLinesVisibility" Value="Horizontal" />
+            <Setter Property="GridLinesVisibility" Value="None" />
             <Setter Property="HeadersVisibility" Value="Column" />
             <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource LineBrush}" />
             <Setter Property="VerticalGridLinesBrush" Value="Transparent" />
-            <Setter Property="RowHeight" Value="38" />
-            <Setter Property="ColumnHeaderHeight" Value="38" />
+            <Setter Property="RowHeight" Value="40" />
+            <Setter Property="ColumnHeaderHeight" Value="40" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Background" Value="White" />
-            <Setter Property="AlternatingRowBackground" Value="#FAFBFD" />
+            <Setter Property="AlternatingRowBackground" Value="#FBFCFE" />
             <Setter Property="SelectionMode" Value="Single" />
             <Setter Property="SelectionUnit" Value="FullRow" />
+            <Setter Property="RowHeaderWidth" Value="0" />
         </Style>
 
         <Style TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="#F8FAFC" />
+            <Setter Property="Background" Value="#F6F9FD" />
             <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
@@ -147,9 +211,24 @@
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         </Style>
+
+        <Style TargetType="DataGridRow">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="#EEF2F7" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{StaticResource HoverBrush}" />
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="{StaticResource SelectedBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
-    <Grid Margin="22">
+    <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -164,14 +243,20 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel>
-                <TextBlock Text="Port Checker" FontSize="28" FontWeight="SemiBold" />
+                <TextBlock Text="Port Checker" FontSize="30" FontWeight="SemiBold" />
                 <TextBlock Text="本机 TCP/UDP 端口占用、进程和 svchost 服务明细"
-                           Margin="0,4,0,0"
+                           Margin="0,5,0,0"
                            Foreground="{StaticResource MutedBrush}" />
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                <Border Background="#EAF1FF" CornerRadius="6" Padding="10,6" Margin="0,0,8,0" ToolTip="{Binding PermissionNotice}">
+                <Border Background="{StaticResource AccentSoftBrush}"
+                        BorderBrush="#C7D7FE"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="10,6"
+                        Margin="0,0,8,0"
+                        ToolTip="{Binding PermissionNotice}">
                     <TextBlock Text="{Binding ElevationText}" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" />
                 </Border>
                 <Button Content="打开任务管理器" Command="{Binding OpenTaskManagerCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" />
@@ -188,31 +273,63 @@
             </Grid.ColumnDefinitions>
 
             <Border Style="{StaticResource CardBorder}" Margin="0,0,10,0">
-                <StackPanel>
-                    <TextBlock Text="全部端口" Foreground="{StaticResource MutedBrush}" />
-                    <TextBlock Text="{Binding TotalCount}" FontSize="26" FontWeight="SemiBold" Margin="0,4,0,0" />
-                </StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="4" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Background="{StaticResource AccentBrush}" CornerRadius="2" />
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="全部端口" Style="{StaticResource MetricLabelText}" />
+                        <TextBlock Text="{Binding TotalCount}" Style="{StaticResource MetricValueText}" />
+                    </StackPanel>
+                </Grid>
             </Border>
 
             <Border Grid.Column="1" Style="{StaticResource CardBorder}" Margin="0,0,10,0">
-                <StackPanel>
-                    <TextBlock Text="TCP" Foreground="{StaticResource MutedBrush}" />
-                    <TextBlock Text="{Binding TcpCount}" FontSize="26" FontWeight="SemiBold" Margin="0,4,0,0" />
-                </StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="4" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Background="#0EA5E9" CornerRadius="2" />
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="TCP" Style="{StaticResource MetricLabelText}" />
+                        <TextBlock Text="{Binding TcpCount}" Style="{StaticResource MetricValueText}" />
+                    </StackPanel>
+                </Grid>
             </Border>
 
             <Border Grid.Column="2" Style="{StaticResource CardBorder}" Margin="0,0,10,0">
-                <StackPanel>
-                    <TextBlock Text="UDP" Foreground="{StaticResource MutedBrush}" />
-                    <TextBlock Text="{Binding UdpCount}" FontSize="26" FontWeight="SemiBold" Margin="0,4,0,0" />
-                </StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="4" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Background="{StaticResource SuccessBrush}" CornerRadius="2" />
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="UDP" Style="{StaticResource MetricLabelText}" />
+                        <TextBlock Text="{Binding UdpCount}" Style="{StaticResource MetricValueText}" />
+                    </StackPanel>
+                </Grid>
             </Border>
 
             <Border Grid.Column="3" Style="{StaticResource CardBorder}">
-                <StackPanel>
-                    <TextBlock Text="svchost 端口" Foreground="{StaticResource MutedBrush}" />
-                    <TextBlock Text="{Binding SvchostCount}" FontSize="26" FontWeight="SemiBold" Margin="0,4,0,0" />
-                </StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="4" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Background="{StaticResource WarningBrush}" CornerRadius="2" />
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="svchost 端口" Style="{StaticResource MetricLabelText}" />
+                        <TextBlock Text="{Binding SvchostCount}" Style="{StaticResource MetricValueText}" />
+                    </StackPanel>
+                </Grid>
             </Border>
         </Grid>
 
@@ -230,7 +347,7 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <Grid Margin="18,18,18,12">
+                    <Grid Margin="18,16,18,12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
@@ -253,6 +370,7 @@
                                     Height="28"
                                     HorizontalAlignment="Right"
                                     Margin="0,0,4,0"
+                                    Padding="0"
                                     Command="{Binding ClearSearchCommand}"
                                     Style="{StaticResource SecondaryButton}"
                                     Visibility="{Binding SearchText, Converter={StaticResource StringToVisibilityConverter}}" />
@@ -282,11 +400,40 @@
                               SelectedItem="{Binding SelectedPort, Mode=TwoWay}"
                               Margin="1,0,1,1">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="协议" Binding="{Binding ProtocolText}" Width="72" />
-                            <DataGridTextColumn Header="本地地址" Binding="{Binding LocalEndpoint}" Width="170" />
-                            <DataGridTextColumn Header="远程地址" Binding="{Binding RemoteEndpoint}" Width="170" />
+                            <DataGridTemplateColumn Header="协议" Width="72">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#EEF6FF" CornerRadius="4" Padding="7,3" HorizontalAlignment="Left">
+                                            <TextBlock Text="{Binding ProtocolText}"
+                                                       Foreground="{StaticResource AccentBrush}"
+                                                       FontWeight="SemiBold"
+                                                       FontSize="12" />
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="本地地址" Width="176">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding LocalEndpoint}" Style="{StaticResource MonoTableText}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="远程地址" Width="176">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding RemoteEndpoint}" Style="{StaticResource MonoTableText}" Foreground="{StaticResource MutedBrush}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                             <DataGridTextColumn Header="状态" Binding="{Binding State}" Width="120" />
-                            <DataGridTextColumn Header="PID" Binding="{Binding ProcessId}" Width="80" />
+                            <DataGridTemplateColumn Header="PID" Width="80">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding ProcessId}" Style="{StaticResource MonoTableText}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                             <DataGridTextColumn Header="进程" Binding="{Binding ProcessName}" Width="130" />
                             <DataGridTextColumn Header="服务" Binding="{Binding ServiceSummary}" Width="*" MinWidth="180" />
                         </DataGrid.Columns>
@@ -302,9 +449,9 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <StackPanel Margin="18,18,18,14">
-                        <TextBlock Text="进程详情" FontSize="18" FontWeight="SemiBold" />
-                        <TextBlock Text="{Binding SelectedPort.ProcessName}" FontSize="24" FontWeight="SemiBold" Margin="0,8,0,0" />
+                    <StackPanel Margin="18,16,18,14">
+                        <TextBlock Text="进程详情" Style="{StaticResource PanelTitleText}" />
+                        <TextBlock Text="{Binding SelectedPort.ProcessName}" FontSize="24" FontWeight="SemiBold" Margin="0,9,0,0" />
                         <TextBlock Text="{Binding SelectedPort.ProcessId, StringFormat=PID {0}}"
                                    Foreground="{StaticResource MutedBrush}"
                                    Margin="0,2,0,0" />
@@ -312,39 +459,38 @@
 
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="18,0,18,12">
                         <StackPanel>
-                            <TextBlock Text="端点" Foreground="{StaticResource MutedBrush}" />
-                            <TextBlock Text="{Binding SelectedPort.LocalEndpoint}" FontWeight="SemiBold" Margin="0,4,0,12" />
+                            <TextBlock Text="端点" Style="{StaticResource FieldLabelText}" />
+                            <TextBlock Text="{Binding SelectedPort.LocalEndpoint}" Style="{StaticResource FieldValueText}" FontFamily="Cascadia Mono, Consolas" />
 
-                            <TextBlock Text="远程" Foreground="{StaticResource MutedBrush}" />
-                            <TextBlock Text="{Binding SelectedPort.RemoteEndpoint}" FontWeight="SemiBold" Margin="0,4,0,12" />
+                            <TextBlock Text="远程" Style="{StaticResource FieldLabelText}" />
+                            <TextBlock Text="{Binding SelectedPort.RemoteEndpoint}" Style="{StaticResource FieldValueText}" FontFamily="Cascadia Mono, Consolas" />
 
-                            <TextBlock Text="用户" Foreground="{StaticResource MutedBrush}" />
-                            <TextBlock Text="{Binding SelectedPort.UserName, TargetNullValue=无用户信息}" FontWeight="SemiBold" Margin="0,4,0,12" />
+                            <TextBlock Text="用户" Style="{StaticResource FieldLabelText}" />
+                            <TextBlock Text="{Binding SelectedPort.UserName, TargetNullValue=无用户信息}" Style="{StaticResource FieldValueText}" />
 
-                            <TextBlock Text="路径" Foreground="{StaticResource MutedBrush}" />
+                            <TextBlock Text="路径" Style="{StaticResource FieldLabelText}" />
                             <TextBlock Text="{Binding SelectedPort.PathSummary}"
-                                       TextWrapping="Wrap"
-                                       FontWeight="SemiBold"
-                                       Margin="0,4,0,12" />
+                                       Style="{StaticResource FieldValueText}" />
 
-                            <TextBlock Text="命令行" Foreground="{StaticResource MutedBrush}" />
+                            <TextBlock Text="命令行" Style="{StaticResource FieldLabelText}" />
                             <TextBlock Text="{Binding SelectedPort.CommandSummary}"
                                        TextWrapping="Wrap"
-                                       Margin="0,4,0,16" />
+                                       Foreground="{StaticResource InkBrush}"
+                                       Margin="0,0,0,16" />
 
                             <Grid Margin="0,0,0,8">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="svchost 服务" FontSize="16" FontWeight="SemiBold" />
+                                <TextBlock Text="svchost 服务" Style="{StaticResource PanelTitleText}" />
                                 <TextBlock Grid.Column="1"
                                            Text="{Binding SelectedServicesCount}"
                                            Foreground="{StaticResource MutedBrush}"
                                            VerticalAlignment="Center" />
                             </Grid>
 
-                            <Border Background="#FFF7ED"
+                            <Border Background="#FFF8ED"
                                     BorderBrush="#FED7AA"
                                     BorderThickness="1"
                                     CornerRadius="8"
@@ -376,7 +522,7 @@
                                                 CornerRadius="8"
                                                 Padding="12"
                                                 Margin="0,0,0,8"
-                                                Background="#FAFBFD">
+                                                Background="{StaticResource PanelAltBrush}">
                                             <StackPanel>
                                                 <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextWrapping="Wrap" />
                                                 <TextBlock Text="{Binding Name}" Foreground="{StaticResource MutedBrush}" Margin="0,2,0,6" />
