@@ -36,9 +36,9 @@ public sealed class PortEntry
 
     public string ProtocolText => Protocol.ToString().ToUpperInvariant();
 
-    public string LocalEndpoint => $"{LocalAddress}:{LocalPort}";
+    public string LocalEndpoint => FormatEndpoint(LocalAddress, LocalPort);
 
-    public string RemoteEndpoint => RemotePort is int port ? $"{RemoteAddress}:{port}" : RemoteAddress;
+    public string RemoteEndpoint => RemotePort is int port ? FormatEndpoint(RemoteAddress, port) : RemoteAddress;
 
     public string ServiceSummary => Services.Count == 0
         ? (IsSvchost ? "未解析到服务" : "-")
@@ -69,5 +69,13 @@ public sealed class PortEntry
             UserName,
             serviceIndex
         }.Where(value => !string.IsNullOrWhiteSpace(value)));
+    }
+
+    private static string FormatEndpoint(string address, int port)
+    {
+        return address.Contains(":", StringComparison.Ordinal)
+            && !address.StartsWith("[", StringComparison.Ordinal)
+            ? $"[{address}]:{port}"
+            : $"{address}:{port}";
     }
 }
