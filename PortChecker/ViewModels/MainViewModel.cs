@@ -255,18 +255,16 @@ internal sealed class MainViewModel : ObservableObject
                 return;
             }
 
-            PortEntry? nextSelectedPort;
+            var previousSelectedPort = SelectedPort;
             using (PortsView.DeferRefresh())
             {
                 _ports.ReplaceAll(result.Entries);
-                nextSelectedPort = _ports.FirstOrDefault();
             }
 
-            SelectedPort = nextSelectedPort;
             LastScannedAt = result.ScannedAt;
             IsElevated = result.IsElevated;
             PermissionNotice = result.PermissionNotice ?? PermissionNotice;
-            PortsView.Refresh();
+            SelectVisiblePort(FindMatchingPort(previousSelectedPort));
             RaiseCountProperties();
 
             StatusMessage = BuildScanStatusMessage(result);
@@ -548,7 +546,48 @@ internal sealed class MainViewModel : ObservableObject
     private void ApplyFilter()
     {
         PortsView.Refresh();
+        SelectVisiblePort();
         OnPropertyChanged(nameof(FilteredCount));
+    }
+
+    private PortEntry? FindMatchingPort(PortEntry? port)
+    {
+        if (port is null)
+        {
+            return null;
+        }
+
+        return _ports.FirstOrDefault(candidate =>
+            candidate.Protocol == port.Protocol
+            && candidate.LocalAddress.Equals(port.LocalAddress, StringComparison.OrdinalIgnoreCase)
+            && candidate.LocalPort == port.LocalPort
+            && candidate.RemoteAddress.Equals(port.RemoteAddress, StringComparison.OrdinalIgnoreCase)
+            && candidate.RemotePort == port.RemotePort
+            && candidate.ProcessId == port.ProcessId);
+    }
+
+    private void SelectVisiblePort(PortEntry? preferredPort = null)
+    {
+        var targetPort = preferredPort ?? SelectedPort;
+        PortEntry? firstVisiblePort = null;
+        var targetPortVisible = false;
+
+        foreach (var item in PortsView)
+        {
+            if (item is not PortEntry port)
+            {
+                continue;
+            }
+
+            firstVisiblePort ??= port;
+            if (ReferenceEquals(port, targetPort))
+            {
+                targetPortVisible = true;
+                break;
+            }
+        }
+
+        SelectedPort = targetPortVisible ? targetPort : firstVisiblePort;
     }
 
     private void RaiseCountProperties()
