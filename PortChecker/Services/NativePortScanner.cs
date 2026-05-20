@@ -17,13 +17,51 @@ internal sealed class NativePortScanner
 
     public IReadOnlyList<PortSnapshot> GetActivePorts()
     {
-        var ports = new List<PortSnapshot>();
-        ports.AddRange(GetTcp4Rows());
-        ports.AddRange(GetTcp6Rows());
-        ports.AddRange(GetUdp4Rows());
-        ports.AddRange(GetUdp6Rows());
+        return ScanActivePorts().Ports;
+    }
 
-        return ports;
+    public NativePortScanResult ScanActivePorts()
+    {
+        var ports = new List<PortSnapshot>();
+        var warnings = new List<string>();
+
+        AddRows("TCP IPv4", GetTcp4Rows, ports, warnings);
+        AddRows("TCP IPv6", GetTcp6Rows, ports, warnings);
+        AddRows("UDP IPv4", GetUdp4Rows, ports, warnings);
+        AddRows("UDP IPv6", GetUdp6Rows, ports, warnings);
+
+        return new NativePortScanResult(
+            ports,
+            warnings.Count == 0
+                ? null
+                : $"部分端口表读取失败：{string.Join("；", warnings)}");
+    }
+
+    private static void AddRows(
+        string tableName,
+        Func<IReadOnlyList<PortSnapshot>> readRows,
+        ICollection<PortSnapshot> ports,
+        ICollection<string> warnings)
+    {
+        try
+        {
+            foreach (var row in readRows())
+            {
+                ports.Add(row);
+            }
+        }
+        catch (Exception exception) when (IsRecoverableTableReadFailure(exception))
+        {
+            warnings.Add($"{tableName}（{exception.Message}）");
+        }
+    }
+
+    private static bool IsRecoverableTableReadFailure(Exception exception)
+    {
+        return exception is Win32Exception
+            or ExternalException
+            or ArgumentException
+            or InvalidOperationException;
     }
 
     private static IReadOnlyList<PortSnapshot> GetTcp4Rows()

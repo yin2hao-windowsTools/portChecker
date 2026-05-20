@@ -31,8 +31,8 @@ internal sealed class PortMonitorService
             try
             {
                 var snapshotStopwatch = Stopwatch.StartNew();
-                var activePorts = _nativePortScanner.GetActivePorts();
-                var snapshots = activePorts as List<PortSnapshot> ?? activePorts.ToList();
+                var portScan = _nativePortScanner.ScanActivePorts();
+                var snapshots = portScan.Ports as List<PortSnapshot> ?? portScan.Ports.ToList();
                 snapshots.Sort(CompareSnapshots);
                 snapshotStopwatch.Stop();
 
@@ -50,7 +50,12 @@ internal sealed class PortMonitorService
                 distinctProcessCount = processIds.Length;
 
                 var metadataStopwatch = Stopwatch.StartNew();
-                var metadataWarning = string.Empty;
+                var warnings = new List<string>();
+                if (!string.IsNullOrWhiteSpace(portScan.Warning))
+                {
+                    warnings.Add(portScan.Warning);
+                }
+
                 IReadOnlyDictionary<int, ProcessMetadata> metadata;
                 try
                 {
@@ -59,7 +64,7 @@ internal sealed class PortMonitorService
                 catch (Exception exception) when (exception is not OperationCanceledException)
                 {
                     metadata = new Dictionary<int, ProcessMetadata>();
-                    metadataWarning = $"进程详情读取失败（{exception.GetType().Name}）：{exception.Message}";
+                    warnings.Add($"进程详情读取失败（{exception.GetType().Name}）：{exception.Message}");
                 }
 
                 metadataStopwatch.Stop();
@@ -83,7 +88,7 @@ internal sealed class PortMonitorService
                     entries,
                     scannedAt,
                     isElevated,
-                    string.IsNullOrWhiteSpace(metadataWarning) ? null : metadataWarning,
+                    warnings.Count == 0 ? null : string.Join("；", warnings),
                     GetPermissionNotice(isElevated),
                     metrics);
             }
