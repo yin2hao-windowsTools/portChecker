@@ -107,6 +107,10 @@ internal sealed class ProcessMetadataProvider
         {
             // Runtime process data is still useful when WMI is unavailable or restricted.
         }
+        catch (InvalidOperationException)
+        {
+            // Runtime process data is still useful when WMI returns an object that cannot invoke owner lookup.
+        }
     }
 
     private static void AddServiceData(IReadOnlySet<int> processIds, IDictionary<int, ProcessMetadata> metadata)
@@ -166,6 +170,10 @@ internal sealed class ProcessMetadataProvider
             // svchost service details are best effort; do not fail the port scan.
         }
         catch (COMException)
+        {
+            // svchost service details are best effort; do not fail the port scan.
+        }
+        catch (InvalidOperationException)
         {
             // svchost service details are best effort; do not fail the port scan.
         }
@@ -237,6 +245,10 @@ internal sealed class ProcessMetadataProvider
             return null;
         }
         catch (InvalidCastException)
+        {
+            return null;
+        }
+        catch (InvalidOperationException)
         {
             return null;
         }

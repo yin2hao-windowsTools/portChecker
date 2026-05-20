@@ -50,7 +50,18 @@ internal sealed class PortMonitorService
                 distinctProcessCount = processIds.Length;
 
                 var metadataStopwatch = Stopwatch.StartNew();
-                var metadata = _processMetadataProvider.GetMetadata(processIds);
+                var metadataWarning = string.Empty;
+                IReadOnlyDictionary<int, ProcessMetadata> metadata;
+                try
+                {
+                    metadata = _processMetadataProvider.GetMetadata(processIds);
+                }
+                catch (Exception exception) when (exception is not OperationCanceledException)
+                {
+                    metadata = new Dictionary<int, ProcessMetadata>();
+                    metadataWarning = $"进程详情读取失败（{exception.GetType().Name}）：{exception.Message}";
+                }
+
                 metadataStopwatch.Stop();
                 metadataDuration = metadataStopwatch.Elapsed;
 
@@ -72,7 +83,7 @@ internal sealed class PortMonitorService
                     entries,
                     scannedAt,
                     isElevated,
-                    null,
+                    string.IsNullOrWhiteSpace(metadataWarning) ? null : metadataWarning,
                     GetPermissionNotice(isElevated),
                     metrics);
             }
