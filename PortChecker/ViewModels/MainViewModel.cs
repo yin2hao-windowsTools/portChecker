@@ -237,9 +237,12 @@ internal sealed class MainViewModel : ObservableObject
 
     private async Task RefreshAsync()
     {
-        _refreshCancellation?.Cancel();
-        _refreshCancellation = new CancellationTokenSource();
-        var cancellationToken = _refreshCancellation.Token;
+        var previousCancellation = _refreshCancellation;
+        var currentCancellation = new CancellationTokenSource();
+        _refreshCancellation = currentCancellation;
+        previousCancellation?.Cancel();
+
+        var cancellationToken = currentCancellation.Token;
 
         IsRefreshing = true;
         StatusMessage = "正在扫描端口和进程信息...";
@@ -268,11 +271,20 @@ internal sealed class MainViewModel : ObservableObject
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "扫描已取消";
+            if (ReferenceEquals(_refreshCancellation, currentCancellation))
+            {
+                StatusMessage = "扫描已取消";
+            }
         }
         finally
         {
-            IsRefreshing = false;
+            if (ReferenceEquals(_refreshCancellation, currentCancellation))
+            {
+                IsRefreshing = false;
+                _refreshCancellation = null;
+            }
+
+            currentCancellation.Dispose();
         }
     }
 

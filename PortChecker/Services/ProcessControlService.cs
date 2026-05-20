@@ -14,6 +14,7 @@ internal sealed class ProcessControlService
     private const string KillProcessArgument = "--kill-process";
     private const string StopServiceArgument = "--stop-service";
     private const string RestartServiceArgument = "--restart-service";
+    private static readonly TimeSpan ElevatedHelperTimeout = TimeSpan.FromSeconds(90);
 
     public Task KillProcessAsync(int processId, CancellationToken cancellationToken)
     {
@@ -72,7 +73,7 @@ internal sealed class ProcessControlService
                 throw new ProcessControlException("管理员权限操作未能启动。", false);
             }
 
-            process.WaitForExit();
+            WaitForElevatedHelperExit(process, cancellationToken);
             if (process.ExitCode != 0)
             {
                 throw new ProcessControlException(GetElevatedKillFailureMessage(process.ExitCode), false);
@@ -184,7 +185,7 @@ internal sealed class ProcessControlService
                 throw new ProcessControlException("管理员权限操作未能启动。", false);
             }
 
-            process.WaitForExit();
+            WaitForElevatedHelperExit(process, cancellationToken);
             if (process.ExitCode != 0)
             {
                 throw new ProcessControlException(getFailureMessage(process.ExitCode), false);
@@ -331,6 +332,39 @@ internal sealed class ProcessControlService
         catch (Win32Exception exception) when (exception.NativeErrorCode == 1223)
         {
             throw new ProcessControlException("已取消管理员权限请求。", false, exception);
+        }
+    }
+
+    private static void WaitForElevatedHelperExit(Process process, CancellationToken cancellationToken)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        while (!process.WaitForExit(250))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (stopwatch.Elapsed < ElevatedHelperTimeout)
+            {
+                continue;
+            }
+
+            TryKillProcessTree(process);
+            throw new ProcessControlException("管理员权限操作等待超时，已尝试停止辅助进程。", false);
+        }
+    }
+
+    private static void TryKillProcessTree(Process process)
+    {
+        try
+        {
+            process.Kill(entireProcessTree: true);
+        }
+        catch (InvalidOperationException)
+        {
+        }
+        catch (Win32Exception)
+        {
+        }
+        catch (NotSupportedException)
+        {
         }
     }
 

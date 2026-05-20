@@ -13,6 +13,7 @@ internal sealed class NativePortScanner
     private const int AfInet6 = 23;
     private const int ErrorInsufficientBuffer = 122;
     private const int NoError = 0;
+    private const int MaxTableReadAttempts = 4;
 
     public IReadOnlyList<PortSnapshot> GetActivePorts()
     {
@@ -162,22 +163,25 @@ internal sealed class NativePortScanner
             throw new Win32Exception((int)result);
         }
 
-        var buffer = Marshal.AllocHGlobal(size);
-        try
+        for (var attempt = 0; attempt < MaxTableReadAttempts; attempt++)
         {
+            var buffer = Marshal.AllocHGlobal(size);
             result = fillTable(buffer, ref size);
-            if (result != NoError)
+
+            if (result == NoError)
+            {
+                return buffer;
+            }
+
+            Marshal.FreeHGlobal(buffer);
+
+            if (result != ErrorInsufficientBuffer)
             {
                 throw new Win32Exception((int)result);
             }
+        }
 
-            return buffer;
-        }
-        catch
-        {
-            Marshal.FreeHGlobal(buffer);
-            throw;
-        }
+        throw new Win32Exception(ErrorInsufficientBuffer);
     }
 
     private delegate uint TableReader(IntPtr table, ref int size);

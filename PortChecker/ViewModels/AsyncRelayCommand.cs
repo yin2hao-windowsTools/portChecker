@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 
 namespace PortChecker.ViewModels;
@@ -40,6 +41,14 @@ internal sealed class AsyncRelayCommand : ICommand
             _isRunning = true;
             RaiseCanExecuteChanged();
             await _execute(parameter);
+        }
+        catch (Exception exception)
+        {
+            MessageBox.Show(
+                exception.Message,
+                "操作失败",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
         }
         finally
         {
