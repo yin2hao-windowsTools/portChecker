@@ -27,6 +27,7 @@ internal sealed class MainViewModel : ObservableObject
     private string _statusMessage = "准备扫描端口";
     private string _permissionNotice = "普通权限：端口和 PID 可正常查看；部分系统进程详情可能受限，高风险操作会按需请求管理员权限。";
     private string _serviceOperationResult = string.Empty;
+    private string _emptyPortListMessage = string.Empty;
     private bool _isControllingService;
     private DateTimeOffset? _lastScannedAt;
     private bool _isElevated;
@@ -171,6 +172,12 @@ internal sealed class MainViewModel : ObservableObject
 
     public string ServiceOperationRiskText { get; } = "服务级操作只会控制选中的 Windows 服务，不会结束整个 svchost；停止或重启系统服务仍可能中断网络、登录、打印、更新等依赖功能。";
 
+    public string EmptyPortListMessage
+    {
+        get => _emptyPortListMessage;
+        private set => SetProperty(ref _emptyPortListMessage, value);
+    }
+
     public string ServiceOperationResult
     {
         get => _serviceOperationResult;
@@ -246,6 +253,7 @@ internal sealed class MainViewModel : ObservableObject
 
         IsRefreshing = true;
         StatusMessage = "正在扫描端口和进程信息...";
+        EmptyPortListMessage = string.Empty;
 
         try
         {
@@ -282,6 +290,7 @@ internal sealed class MainViewModel : ObservableObject
             {
                 IsRefreshing = false;
                 _refreshCancellation = null;
+                UpdateEmptyPortListMessage();
             }
 
             currentCancellation.Dispose();
@@ -528,13 +537,19 @@ internal sealed class MainViewModel : ObservableObject
 
     private string BuildScanStatusMessage(PortScanResult result)
     {
+        var metrics = result.Metrics;
+        var countText = _ports.Count == 0
+            ? "扫描完成，但未获取到端口记录"
+            : FilteredCount == _ports.Count
+                ? $"扫描完成，发现 {_ports.Count} 个端口占用"
+                : $"扫描完成，发现 {_ports.Count} 个端口占用，当前筛选显示 {FilteredCount} 条";
+
         if (result.Warning is not null)
         {
-            return $"{result.Warning}。{PermissionNotice}";
+            return $"{countText}；{result.Warning}。{PermissionNotice}";
         }
 
-        var metrics = result.Metrics;
-        return $"扫描完成，发现 {_ports.Count} 个端口占用（总耗时 {metrics.TotalDuration.TotalMilliseconds:F0}ms，端口扫描 {metrics.PortSnapshotDuration.TotalMilliseconds:F0}ms，元数据 {metrics.MetadataDuration.TotalMilliseconds:F0}ms，进程 {metrics.DistinctProcessCount}）。{PermissionNotice}";
+        return $"{countText}（总耗时 {metrics.TotalDuration.TotalMilliseconds:F0}ms，端口扫描 {metrics.PortSnapshotDuration.TotalMilliseconds:F0}ms，元数据 {metrics.MetadataDuration.TotalMilliseconds:F0}ms，进程 {metrics.DistinctProcessCount}）。{PermissionNotice}";
     }
 
     private void SearchDebounceTimerTick(object? sender, EventArgs e)
@@ -548,6 +563,18 @@ internal sealed class MainViewModel : ObservableObject
         PortsView.Refresh();
         SelectVisiblePort();
         OnPropertyChanged(nameof(FilteredCount));
+        UpdateEmptyPortListMessage();
+    }
+
+    private void UpdateEmptyPortListMessage()
+    {
+        EmptyPortListMessage = (IsRefreshing, _ports.Count, FilteredCount) switch
+        {
+            (true, _, _) => string.Empty,
+            (false, 0, _) => "未获取到端口记录。请确认系统网络服务正在运行，或尝试以管理员权限运行后刷新。",
+            (false, > 0, 0) => "当前筛选没有匹配端口。清除搜索或切换筛选条件后再查看。",
+            _ => string.Empty
+        };
     }
 
     private PortEntry? FindMatchingPort(PortEntry? port)

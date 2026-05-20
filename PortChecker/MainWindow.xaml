@@ -438,6 +438,22 @@
                             <DataGridTextColumn Header="服务" Binding="{Binding ServiceSummary}" Width="*" MinWidth="180" />
                         </DataGrid.Columns>
                     </DataGrid>
+
+                    <Border Grid.Row="1"
+                            Background="#F8FAFD"
+                            BorderBrush="{StaticResource LineBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="18"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Visibility="{Binding EmptyPortListMessage, Converter={StaticResource StringToVisibilityConverter}}">
+                        <TextBlock Text="{Binding EmptyPortListMessage}"
+                                   Foreground="{StaticResource MutedBrush}"
+                                   FontWeight="SemiBold"
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap" />
+                    </Border>
                 </Grid>
             </Border>
 
