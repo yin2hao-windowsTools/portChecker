@@ -255,12 +255,14 @@ internal sealed class MainViewModel : ObservableObject
                 return;
             }
 
+            PortEntry? nextSelectedPort;
             using (PortsView.DeferRefresh())
             {
                 _ports.ReplaceAll(result.Entries);
-                SelectedPort = _ports.FirstOrDefault();
+                nextSelectedPort = _ports.FirstOrDefault();
             }
 
+            SelectedPort = nextSelectedPort;
             LastScannedAt = result.ScannedAt;
             IsElevated = result.IsElevated;
             PermissionNotice = result.PermissionNotice ?? PermissionNotice;
