@@ -15,14 +15,27 @@ internal sealed class MainViewModel : ObservableObject
 {
     private readonly PortMonitorService _portMonitorService = new();
     private readonly ProcessControlService _processControlService = new();
+    private readonly ReservedPortRangeService _reservedPortRangeService = new();
     private readonly BulkObservableCollection<PortEntry> _ports = [];
+    private readonly BulkObservableCollection<ReservedPortRange> _reservedPortRanges = [];
     private readonly DispatcherTimer _searchDebounceTimer;
     private CancellationTokenSource? _refreshCancellation;
+    private CancellationTokenSource? _reservedPortRefreshCancellation;
     private string _searchText = string.Empty;
     private string _searchKeyword = string.Empty;
     private string _protocolFilter = "全部";
     private string _stateFilter = "全部";
     private PortEntry? _selectedPort;
+    private ReservedPortRange? _selectedReservedPortRange;
+    private string _reservedPortProtocol = "TCP";
+    private string _reservedPortStore = "persistent";
+    private string _reservedPortListStore = "active";
+    private string _reservedPortStart = string.Empty;
+    private string _reservedPortCount = "1";
+    private bool _isRefreshingReservedPorts;
+    private bool _isManagingReservedPort;
+    private string _reservedPortStatusMessage = "保留端口尚未刷新";
+    private string _emptyReservedPortMessage = string.Empty;
     private bool _isRefreshing;
     private string _statusMessage = "准备扫描端口";
     private string _permissionNotice = "普通权限：端口和 PID 可正常查看；部分系统进程详情可能受限，高风险操作会按需请求管理员权限。";
@@ -45,6 +58,9 @@ internal sealed class MainViewModel : ObservableObject
         PortsView.SortDescriptions.Add(new SortDescription(nameof(PortEntry.LocalPort), ListSortDirection.Ascending));
 
         RefreshCommand = new AsyncRelayCommand(RefreshAsync, () => !IsRefreshing);
+        RefreshReservedPortsCommand = new AsyncRelayCommand(RefreshReservedPortsAsync, () => !IsRefreshingReservedPorts);
+        AddReservedPortRangeCommand = new AsyncRelayCommand(AddReservedPortRangeAsync, () => CanAddReservedPortRange);
+        DeleteReservedPortRangeCommand = new AsyncRelayCommand(DeleteReservedPortRangeAsync, () => CanDeleteReservedPortRange);
         KillProcessCommand = new AsyncRelayCommand(KillSelectedProcessAsync, () => CanKillSelectedProcess);
         StopServiceCommand = new AsyncRelayCommand(StopServiceAsync, CanControlService);
         RestartServiceCommand = new AsyncRelayCommand(RestartServiceAsync, CanControlService);
@@ -55,11 +71,23 @@ internal sealed class MainViewModel : ObservableObject
 
     public ICollectionView PortsView { get; }
 
+    public IReadOnlyList<ReservedPortRange> ReservedPortRanges => _reservedPortRanges;
+
     public IReadOnlyList<string> ProtocolFilters { get; } = ["全部", "TCP", "UDP"];
 
     public IReadOnlyList<string> StateFilters { get; } = ["全部", "LISTENING", "BOUND", "ESTABLISHED", "TIME_WAIT", "UDP"];
 
+    public IReadOnlyList<string> ReservedPortProtocols { get; } = ["TCP", "UDP"];
+
+    public IReadOnlyList<string> ReservedPortListStores { get; } = ["active", "persistent"];
+
     public AsyncRelayCommand RefreshCommand { get; }
+
+    public AsyncRelayCommand RefreshReservedPortsCommand { get; }
+
+    public AsyncRelayCommand AddReservedPortRangeCommand { get; }
+
+    public AsyncRelayCommand DeleteReservedPortRangeCommand { get; }
 
     public AsyncRelayCommand KillProcessCommand { get; }
 
@@ -146,6 +174,77 @@ internal sealed class MainViewModel : ObservableObject
         }
     }
 
+    public ReservedPortRange? SelectedReservedPortRange
+    {
+        get => _selectedReservedPortRange;
+        set
+        {
+            if (SetProperty(ref _selectedReservedPortRange, value))
+            {
+                DeleteReservedPortRangeCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanDeleteReservedPortRange));
+                OnPropertyChanged(nameof(SelectedReservedPortRangeSummary));
+            }
+        }
+    }
+
+    public string ReservedPortProtocol
+    {
+        get => _reservedPortProtocol;
+        set
+        {
+            if (SetProperty(ref _reservedPortProtocol, value ?? "TCP"))
+            {
+                AddReservedPortRangeCommand.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    public string ReservedPortStore
+    {
+        get => _reservedPortStore;
+        set => SetProperty(ref _reservedPortStore, NormalizeReservedPortStore(value));
+    }
+
+    public string ReservedPortListStore
+    {
+        get => _reservedPortListStore;
+        set
+        {
+            var normalizedValue = NormalizeReservedPortStore(value);
+            if (SetProperty(ref _reservedPortListStore, normalizedValue))
+            {
+                _ = RefreshReservedPortsAsync();
+            }
+        }
+    }
+
+    public string ReservedPortStart
+    {
+        get => _reservedPortStart;
+        set
+        {
+            if (SetProperty(ref _reservedPortStart, value ?? string.Empty))
+            {
+                AddReservedPortRangeCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanAddReservedPortRange));
+            }
+        }
+    }
+
+    public string ReservedPortCount
+    {
+        get => _reservedPortCount;
+        set
+        {
+            if (SetProperty(ref _reservedPortCount, value ?? string.Empty))
+            {
+                AddReservedPortRangeCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanAddReservedPortRange));
+            }
+        }
+    }
+
     public bool IsRefreshing
     {
         get => _isRefreshing;
@@ -158,10 +257,50 @@ internal sealed class MainViewModel : ObservableObject
         }
     }
 
+    public bool IsRefreshingReservedPorts
+    {
+        get => _isRefreshingReservedPorts;
+        private set
+        {
+            if (SetProperty(ref _isRefreshingReservedPorts, value))
+            {
+                RefreshReservedPortsCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanAddReservedPortRange));
+            }
+        }
+    }
+
+    public bool IsManagingReservedPort
+    {
+        get => _isManagingReservedPort;
+        private set
+        {
+            if (SetProperty(ref _isManagingReservedPort, value))
+            {
+                AddReservedPortRangeCommand.RaiseCanExecuteChanged();
+                DeleteReservedPortRangeCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanAddReservedPortRange));
+                OnPropertyChanged(nameof(CanDeleteReservedPortRange));
+            }
+        }
+    }
+
     public string StatusMessage
     {
         get => _statusMessage;
         private set => SetProperty(ref _statusMessage, value);
+    }
+
+    public string ReservedPortStatusMessage
+    {
+        get => _reservedPortStatusMessage;
+        private set => SetProperty(ref _reservedPortStatusMessage, value);
+    }
+
+    public string EmptyReservedPortMessage
+    {
+        get => _emptyReservedPortMessage;
+        private set => SetProperty(ref _emptyReservedPortMessage, value);
     }
 
     public string PermissionNotice
@@ -229,9 +368,25 @@ internal sealed class MainViewModel : ObservableObject
 
     public int SvchostCount => _ports.Count(port => port.IsSvchost);
 
+    public int ReservedPortRangeCount => _reservedPortRanges.Count;
+
+    public int AdministeredReservedPortRangeCount => _reservedPortRanges.Count(range => range.IsAdministered);
+
     public int FilteredCount => PortsView.Cast<object>().Count();
 
     public int SelectedServicesCount => SelectedPort?.Services.Count ?? 0;
+
+    public bool CanAddReservedPortRange => !IsRefreshingReservedPorts
+        && !IsManagingReservedPort
+        && TryBuildReservedPortRangeRequest(out _, out _, out _, out _);
+
+    public bool CanDeleteReservedPortRange => !IsManagingReservedPort && SelectedReservedPortRange is { IsAdministered: true };
+
+    public string SelectedReservedPortRangeSummary => SelectedReservedPortRange is null
+        ? "未选择保留端口"
+        : SelectedReservedPortRange.IsAdministered
+            ? SelectedReservedPortRange.DeleteTargetText
+            : $"{SelectedReservedPortRange.DeleteTargetText}；系统保留范围不可直接删除";
 
     public string LastScannedText => LastScannedAt is null ? "尚未扫描" : LastScannedAt.Value.ToString("yyyy-MM-dd HH:mm:ss");
 
@@ -239,7 +394,7 @@ internal sealed class MainViewModel : ObservableObject
 
     public async Task InitializeAsync()
     {
-        await RefreshAsync();
+        await Task.WhenAll(RefreshAsync(), RefreshReservedPortsAsync());
     }
 
     private async Task RefreshAsync()
@@ -295,6 +450,199 @@ internal sealed class MainViewModel : ObservableObject
 
             currentCancellation.Dispose();
         }
+    }
+
+    private async Task RefreshReservedPortsAsync()
+    {
+        var previousCancellation = _reservedPortRefreshCancellation;
+        var currentCancellation = new CancellationTokenSource();
+        _reservedPortRefreshCancellation = currentCancellation;
+        previousCancellation?.Cancel();
+
+        var cancellationToken = currentCancellation.Token;
+
+        IsRefreshingReservedPorts = true;
+        EmptyReservedPortMessage = string.Empty;
+        ReservedPortStatusMessage = $"正在读取 {GetStoreDisplayText(ReservedPortListStore)}保留端口...";
+
+        try
+        {
+            var ranges = await _reservedPortRangeService.GetReservedRangesAsync(ReservedPortListStore, cancellationToken);
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
+            var previousSelectedRange = SelectedReservedPortRange;
+            _reservedPortRanges.ReplaceAll(ranges);
+            SelectedReservedPortRange = FindMatchingReservedPortRange(previousSelectedRange) ?? _reservedPortRanges.FirstOrDefault();
+            RaiseReservedPortProperties();
+
+            ReservedPortStatusMessage = ranges.Count == 0
+                ? $"{GetStoreDisplayText(ReservedPortListStore)}保留端口为空"
+                : $"已读取 {ranges.Count} 条{GetStoreDisplayText(ReservedPortListStore)}保留端口，其中 {AdministeredReservedPortRangeCount} 条为用户保留";
+        }
+        catch (OperationCanceledException)
+        {
+            if (ReferenceEquals(_reservedPortRefreshCancellation, currentCancellation))
+            {
+                ReservedPortStatusMessage = "保留端口刷新已取消";
+            }
+        }
+        catch (Exception exception)
+        {
+            ReservedPortStatusMessage = $"保留端口读取失败：{exception.Message}";
+            _reservedPortRanges.ReplaceAll([]);
+            SelectedReservedPortRange = null;
+            RaiseReservedPortProperties();
+        }
+        finally
+        {
+            if (ReferenceEquals(_reservedPortRefreshCancellation, currentCancellation))
+            {
+                IsRefreshingReservedPorts = false;
+                _reservedPortRefreshCancellation = null;
+                UpdateEmptyReservedPortMessage();
+            }
+
+            currentCancellation.Dispose();
+        }
+    }
+
+    private async Task AddReservedPortRangeAsync()
+    {
+        if (!TryBuildReservedPortRangeRequest(out var protocol, out var startPort, out var portCount, out var store))
+        {
+            MessageBox.Show("请输入有效的协议、起始端口和端口数量。", "保留端口", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var endPort = startPort + portCount - 1;
+        var result = MessageBox.Show(
+            $"确定要添加 {protocol.ToString().ToUpperInvariant()} {FormatPortRange(startPort, endPort)} 到 Windows 保留端口吗？{Environment.NewLine}{Environment.NewLine}存储范围：{GetStoreDisplayText(store)}。添加后其他程序将不能绑定该范围。",
+            "添加保留端口",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning,
+            MessageBoxResult.No);
+
+        if (result != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        await ManageReservedPortRangeAsync(
+            "添加",
+            () => _reservedPortRangeService.AddReservedRangeAsync(protocol, startPort, portCount, store, CancellationToken.None),
+            () => _reservedPortRangeService.AddReservedRangeElevatedAsync(protocol, startPort, portCount, store, CancellationToken.None),
+            $"{protocol.ToString().ToUpperInvariant()} {FormatPortRange(startPort, endPort)}（{GetStoreDisplayText(store)}）",
+            store);
+    }
+
+    private async Task DeleteReservedPortRangeAsync()
+    {
+        if (SelectedReservedPortRange is null)
+        {
+            return;
+        }
+
+        var selected = SelectedReservedPortRange;
+        if (!selected.IsAdministered)
+        {
+            MessageBox.Show(
+                "该范围由系统动态保留，未标记为用户保留；请只删除带用户保留标记的规则。",
+                "删除保留端口",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
+
+        var result = MessageBox.Show(
+            $"确定要删除 Windows 保留端口 {selected.DeleteTargetText} 吗？{Environment.NewLine}{Environment.NewLine}删除时必须与原规则的起始端口和端口数量完全一致。",
+            "删除保留端口",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning,
+            MessageBoxResult.No);
+
+        if (result != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        await ManageReservedPortRangeAsync(
+            "删除",
+            () => _reservedPortRangeService.DeleteReservedRangeAsync(selected, CancellationToken.None),
+            () => _reservedPortRangeService.DeleteReservedRangeElevatedAsync(selected, CancellationToken.None),
+            selected.DeleteTargetText,
+            selected.Store);
+    }
+
+    private async Task ManageReservedPortRangeAsync(
+        string actionText,
+        Func<Task> operation,
+        Func<Task> elevatedOperation,
+        string targetText,
+        string refreshStore)
+    {
+        IsManagingReservedPort = true;
+
+        try
+        {
+            ReservedPortStatusMessage = $"正在{actionText}保留端口 {targetText}...";
+            await operation();
+            ReservedPortStatusMessage = $"已{actionText}保留端口 {targetText}，正在刷新列表...";
+            await RefreshReservedPortsForStoreAsync(refreshStore);
+            ReservedPortStatusMessage = $"已{actionText}保留端口 {targetText}。";
+        }
+        catch (ProcessControlException exception) when (exception.CanRetryElevated)
+        {
+            var elevateResult = MessageBox.Show(
+                $"{exception.Message}{Environment.NewLine}{Environment.NewLine}是否以管理员权限重试{actionText}保留端口 {targetText}？",
+                "需要管理员权限",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning,
+                MessageBoxResult.No);
+
+            if (elevateResult != MessageBoxResult.Yes)
+            {
+                ReservedPortStatusMessage = $"{actionText}保留端口受限：{exception.Message}";
+                return;
+            }
+
+            try
+            {
+                ReservedPortStatusMessage = $"正在请求管理员权限{actionText}保留端口 {targetText}...";
+                await elevatedOperation();
+                ReservedPortStatusMessage = $"已通过管理员权限{actionText}保留端口 {targetText}，正在刷新列表...";
+                await RefreshReservedPortsForStoreAsync(refreshStore);
+                ReservedPortStatusMessage = $"已通过管理员权限{actionText}保留端口 {targetText}。";
+            }
+            catch (Exception elevatedException)
+            {
+                ReservedPortStatusMessage = $"管理员权限{actionText}保留端口失败：{elevatedException.Message}";
+                MessageBox.Show(ReservedPortStatusMessage, "保留端口操作失败", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        catch (Exception exception)
+        {
+            ReservedPortStatusMessage = $"{actionText}保留端口失败：{exception.Message}";
+            MessageBox.Show(ReservedPortStatusMessage, "保留端口操作失败", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsManagingReservedPort = false;
+            UpdateEmptyReservedPortMessage();
+        }
+    }
+
+    private Task RefreshReservedPortsForStoreAsync(string store)
+    {
+        var normalizedStore = NormalizeReservedPortStore(store);
+        if (!ReservedPortListStore.Equals(normalizedStore, StringComparison.OrdinalIgnoreCase))
+        {
+            SetProperty(ref _reservedPortListStore, normalizedStore, nameof(ReservedPortListStore));
+        }
+
+        return RefreshReservedPortsAsync();
     }
 
     private async Task KillSelectedProcessAsync()
@@ -577,6 +925,16 @@ internal sealed class MainViewModel : ObservableObject
         };
     }
 
+    private void UpdateEmptyReservedPortMessage()
+    {
+        EmptyReservedPortMessage = (IsRefreshingReservedPorts, _reservedPortRanges.Count) switch
+        {
+            (true, _) => string.Empty,
+            (false, 0) => $"{GetStoreDisplayText(ReservedPortListStore)}保留端口为空，或当前权限无法读取。点击刷新可重新获取。",
+            _ => string.Empty
+        };
+    }
+
     private PortEntry? FindMatchingPort(PortEntry? port)
     {
         if (port is null)
@@ -591,6 +949,52 @@ internal sealed class MainViewModel : ObservableObject
             && candidate.RemoteAddress.Equals(port.RemoteAddress, StringComparison.OrdinalIgnoreCase)
             && candidate.RemotePort == port.RemotePort
             && candidate.ProcessId == port.ProcessId);
+    }
+
+    private ReservedPortRange? FindMatchingReservedPortRange(ReservedPortRange? range)
+    {
+        if (range is null)
+        {
+            return null;
+        }
+
+        return _reservedPortRanges.FirstOrDefault(candidate =>
+            candidate.Protocol == range.Protocol
+            && candidate.StartPort == range.StartPort
+            && candidate.EndPort == range.EndPort
+            && candidate.Store.Equals(range.Store, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private bool TryBuildReservedPortRangeRequest(
+        out PortProtocol protocol,
+        out int startPort,
+        out int portCount,
+        out string store)
+    {
+        protocol = PortProtocol.Tcp;
+        startPort = 0;
+        portCount = 0;
+        store = NormalizeReservedPortStore(ReservedPortStore);
+
+        if (ReservedPortProtocol.Equals("UDP", StringComparison.OrdinalIgnoreCase))
+        {
+            protocol = PortProtocol.Udp;
+        }
+        else if (!ReservedPortProtocol.Equals("TCP", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (!int.TryParse(ReservedPortStart, out startPort)
+            || !int.TryParse(ReservedPortCount, out portCount)
+            || startPort is < 0 or > 65535
+            || portCount <= 0
+            || startPort + portCount - 1 > 65535)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private void SelectVisiblePort(PortEntry? preferredPort = null)
@@ -627,5 +1031,35 @@ internal sealed class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(SelectedServicesCount));
         OnPropertyChanged(nameof(CanKillSelectedProcess));
         OnPropertyChanged(nameof(KillProcessWarningText));
+    }
+
+    private void RaiseReservedPortProperties()
+    {
+        OnPropertyChanged(nameof(ReservedPortRangeCount));
+        OnPropertyChanged(nameof(AdministeredReservedPortRangeCount));
+        OnPropertyChanged(nameof(CanAddReservedPortRange));
+        OnPropertyChanged(nameof(CanDeleteReservedPortRange));
+        OnPropertyChanged(nameof(SelectedReservedPortRangeSummary));
+    }
+
+    private static string NormalizeReservedPortStore(string? store)
+    {
+        return string.Equals(store, "active", StringComparison.OrdinalIgnoreCase)
+            ? "active"
+            : "persistent";
+    }
+
+    private static string GetStoreDisplayText(string store)
+    {
+        return store.Equals("persistent", StringComparison.OrdinalIgnoreCase)
+            ? "持久"
+            : "当前";
+    }
+
+    private static string FormatPortRange(int startPort, int endPort)
+    {
+        return startPort == endPort
+            ? startPort.ToString()
+            : $"{startPort}-{endPort}";
     }
 }

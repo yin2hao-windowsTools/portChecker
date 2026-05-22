@@ -12,7 +12,8 @@ public partial class App : Application
     {
         PortableMode.Initialize();
 
-        if (ProcessControlService.TryHandleElevatedCommand(e.Args))
+        if (ProcessControlService.TryHandleElevatedCommand(e.Args)
+            || ReservedPortRangeService.TryHandleElevatedCommand(e.Args))
         {
             Shutdown(Environment.ExitCode);
             return;

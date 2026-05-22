@@ -4,9 +4,9 @@
         xmlns:converters="clr-namespace:PortChecker.Converters"
         Title="Port Checker"
         Width="1280"
-        Height="780"
+        Height="860"
         MinWidth="1080"
-        MinHeight="680"
+        MinHeight="760"
         Background="#F5F7FB"
         FontFamily="Segoe UI"
         FontSize="13"
@@ -126,6 +126,12 @@
             </Style.Triggers>
         </Style>
 
+        <Style x:Key="CompactTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource TextBoxStyle}">
+            <Setter Property="MinWidth" Value="92" />
+            <Setter Property="MinHeight" Value="34" />
+            <Setter Property="Padding" Value="10,6" />
+        </Style>
+
         <Style x:Key="ComboBoxStyle" TargetType="ComboBox">
             <Setter Property="MinHeight" Value="36" />
             <Setter Property="MinWidth" Value="120" />
@@ -232,7 +238,8 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="2.1*" />
+            <RowDefinition Height="1.8*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
@@ -590,7 +597,168 @@
             </Border>
         </Grid>
 
-        <Grid Grid.Row="3" Margin="0,14,0,0">
+        <Border Grid.Row="3" Style="{StaticResource CardBorder}" Padding="0" Margin="0,16,0,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2.2*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="1*" />
+                </Grid.ColumnDefinitions>
+
+                <Grid Grid.ColumnSpan="3" Margin="18,14,18,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel>
+                        <TextBlock Text="Windows 保留端口" Style="{StaticResource PanelTitleText}" />
+                        <TextBlock Text="{Binding ReservedPortStatusMessage}"
+                                   Foreground="{StaticResource MutedBrush}"
+                                   Margin="0,3,0,0" />
+                    </StackPanel>
+
+                    <ComboBox Grid.Column="1"
+                              ItemsSource="{Binding ReservedPortListStores}"
+                              SelectedItem="{Binding ReservedPortListStore}"
+                              Style="{StaticResource ComboBoxStyle}"
+                              MinWidth="112"
+                              Margin="10,0,0,0" />
+
+                    <TextBlock Grid.Column="2"
+                               Text="{Binding ReservedPortRangeCount, StringFormat=共 {0} 条}"
+                               Foreground="{StaticResource MutedBrush}"
+                               VerticalAlignment="Center"
+                               Margin="14,0,0,0" />
+
+                    <Button Grid.Column="3"
+                            Content="刷新保留端口"
+                            Command="{Binding RefreshReservedPortsCommand}"
+                            Style="{StaticResource SecondaryButton}"
+                            Margin="10,0,0,0" />
+                </Grid>
+
+                <Grid Grid.Row="1" Margin="0,0,0,1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2.2*" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="1*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Grid>
+                        <DataGrid ItemsSource="{Binding ReservedPortRanges}"
+                                  SelectedItem="{Binding SelectedReservedPortRange, Mode=TwoWay}"
+                                  Margin="1,0,0,0">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="协议" Binding="{Binding ProtocolText}" Width="80" />
+                                <DataGridTextColumn Header="范围" Binding="{Binding RangeText}" Width="140" />
+                                <DataGridTextColumn Header="端口数" Binding="{Binding PortCount}" Width="90" />
+                                <DataGridTextColumn Header="存储" Binding="{Binding StoreText}" Width="90" />
+                                <DataGridTextColumn Header="来源" Binding="{Binding SourceText}" Width="*" MinWidth="120" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <Border Background="#F8FAFD"
+                                BorderBrush="{StaticResource LineBrush}"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="14"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Visibility="{Binding EmptyReservedPortMessage, Converter={StaticResource StringToVisibilityConverter}}">
+                            <TextBlock Text="{Binding EmptyReservedPortMessage}"
+                                       Foreground="{StaticResource MutedBrush}"
+                                       FontWeight="SemiBold"
+                                       TextAlignment="Center"
+                                       TextWrapping="Wrap" />
+                        </Border>
+                    </Grid>
+
+                    <Border Grid.Column="2"
+                            BorderBrush="{StaticResource LineBrush}"
+                            BorderThickness="1,0,0,0"
+                            Padding="18,0,18,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Text="添加保留范围" Style="{StaticResource PanelTitleText}" />
+
+                            <Grid Grid.Row="1" Margin="0,10,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*" />
+                                    <ColumnDefinition Width="8" />
+                                    <ColumnDefinition Width="1*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Text="协议" Style="{StaticResource FieldLabelText}" />
+                                <ComboBox Grid.Row="1"
+                                          ItemsSource="{Binding ReservedPortProtocols}"
+                                          SelectedItem="{Binding ReservedPortProtocol}"
+                                          Style="{StaticResource ComboBoxStyle}"
+                                          MinWidth="0" />
+
+                                <TextBlock Grid.Column="2" Text="存储" Style="{StaticResource FieldLabelText}" />
+                                <ComboBox Grid.Row="1"
+                                          Grid.Column="2"
+                                          ItemsSource="{Binding ReservedPortListStores}"
+                                          SelectedItem="{Binding ReservedPortStore}"
+                                          Style="{StaticResource ComboBoxStyle}"
+                                          MinWidth="0" />
+
+                                <TextBlock Grid.Row="2" Text="起始端口" Style="{StaticResource FieldLabelText}" Margin="0,10,0,4" />
+                                <TextBox Grid.Row="3"
+                                         Text="{Binding ReservedPortStart, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource CompactTextBoxStyle}" />
+
+                                <TextBlock Grid.Row="2" Grid.Column="2" Text="端口数量" Style="{StaticResource FieldLabelText}" Margin="0,10,0,4" />
+                                <TextBox Grid.Row="3"
+                                         Grid.Column="2"
+                                         Text="{Binding ReservedPortCount, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource CompactTextBoxStyle}" />
+                            </Grid>
+
+                            <StackPanel Grid.Row="2">
+                                <TextBlock Text="{Binding SelectedReservedPortRangeSummary}"
+                                           Foreground="{StaticResource MutedBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,8" />
+                                <TextBlock Text="{Binding AdministeredReservedPortRangeCount, StringFormat=用户保留 {0} 条}"
+                                           Foreground="{StaticResource MutedBrush}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="添加"
+                                        Command="{Binding AddReservedPortRangeCommand}"
+                                        Style="{StaticResource PrimaryButton}"
+                                        Margin="0,0,8,0" />
+                                <Button Content="删除选中"
+                                        Command="{Binding DeleteReservedPortRangeCommand}"
+                                        Style="{StaticResource DangerButton}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="4" Margin="0,14,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
