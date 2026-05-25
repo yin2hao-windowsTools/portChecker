@@ -18,6 +18,7 @@ internal sealed class MainViewModel : ObservableObject
     private readonly ReservedPortRangeService _reservedPortRangeService = new();
     private readonly ExternalLinkService _externalLinkService = new();
     private readonly ReleaseUpdateService _releaseUpdateService = new();
+    private readonly UpdateInstallService _updateInstallService = new();
     private readonly BulkObservableCollection<PortEntry> _ports = [];
     private readonly BulkObservableCollection<ReservedPortRange> _reservedPortRanges = [];
     private readonly DispatcherTimer _searchDebounceTimer;
@@ -931,13 +932,7 @@ internal sealed class MainViewModel : ObservableObject
 
             case UpdateCheckState.UpdateAvailable:
                 StatusMessage = $"发现新版本 {result.LatestVersionText}，当前版本 {result.CurrentVersionText}。";
-                await PromptOpenReleaseAsync(
-                    result,
-                    $"发现新版本：{BuildReleaseTitle(result)}{Environment.NewLine}{Environment.NewLine}" +
-                    $"当前版本：{result.CurrentVersionText}{Environment.NewLine}" +
-                    $"最新版本：{result.LatestVersionText}{Environment.NewLine}{Environment.NewLine}" +
-                    "是否打开 Release 页面？",
-                    MessageBoxImage.Question);
+                await PromptInstallUpdateAsync(result);
                 return;
 
             case UpdateCheckState.UpToDate:
@@ -965,6 +960,64 @@ internal sealed class MainViewModel : ObservableObject
         if (response == MessageBoxResult.Yes && !string.IsNullOrWhiteSpace(result.ReleaseUrl))
         {
             await _externalLinkService.OpenUrlAsync(result.ReleaseUrl);
+        }
+    }
+
+    private async Task PromptInstallUpdateAsync(UpdateCheckResult result)
+    {
+        var response = MessageBox.Show(
+            $"发现新版本：{BuildReleaseTitle(result)}{Environment.NewLine}{Environment.NewLine}" +
+            $"当前版本：{result.CurrentVersionText}{Environment.NewLine}" +
+            $"最新版本：{result.LatestVersionText}{Environment.NewLine}{Environment.NewLine}" +
+            "选择“是”将自动下载并覆盖旧版本，完成后会重启程序。" +
+            $"{Environment.NewLine}选择“否”只打开 Release 页面。",
+            "检查更新",
+            MessageBoxButton.YesNoCancel,
+            MessageBoxImage.Question,
+            MessageBoxResult.Yes);
+
+        if (response == MessageBoxResult.Yes)
+        {
+            await InstallUpdateAsync(result);
+            return;
+        }
+
+        if (response == MessageBoxResult.No && !string.IsNullOrWhiteSpace(result.ReleaseUrl))
+        {
+            await _externalLinkService.OpenUrlAsync(result.ReleaseUrl);
+        }
+    }
+
+    private async Task InstallUpdateAsync(UpdateCheckResult result)
+    {
+        try
+        {
+            var progress = new Progress<string>(message => StatusMessage = message);
+            var launchResult = await _updateInstallService.DownloadAndLaunchAsync(
+                result,
+                progress,
+                CancellationToken.None);
+
+            StatusMessage = $"已准备更新包 {launchResult.AssetName}，正在关闭以覆盖旧版本...";
+            MessageBox.Show(
+                $"更新包已下载并校验完成。{Environment.NewLine}{Environment.NewLine}" +
+                "程序将关闭，随后自动覆盖旧版本并重启。" +
+                $"{(launchResult.RequiresElevation ? $"{Environment.NewLine}{Environment.NewLine}安装位置需要管理员权限，请确认系统弹出的权限请求。" : string.Empty)}" +
+                $"{Environment.NewLine}{Environment.NewLine}更新日志：{launchResult.LogPath}",
+                "安装更新",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+
+            Application.Current.Shutdown();
+        }
+        catch (Exception exception)
+        {
+            StatusMessage = $"自动更新失败：{exception.Message}";
+            MessageBox.Show(
+                $"{StatusMessage}{Environment.NewLine}{Environment.NewLine}你仍然可以在 Release 页面手动下载更新包。",
+                "安装更新",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
         }
     }
 

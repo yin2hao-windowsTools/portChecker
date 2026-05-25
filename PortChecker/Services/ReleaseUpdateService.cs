@@ -43,6 +43,14 @@ internal sealed class ReleaseUpdateService
         var releaseUrl = string.IsNullOrWhiteSpace(release.HtmlUrl)
             ? $"{ApplicationInfo.RepositoryUrl}/releases/latest"
             : release.HtmlUrl;
+        var assets = release.Assets?
+            .Where(asset => !string.IsNullOrWhiteSpace(asset.Name) && !string.IsNullOrWhiteSpace(asset.BrowserDownloadUrl))
+            .Select(asset => new ReleaseAsset(
+                asset.Name!,
+                asset.BrowserDownloadUrl!,
+                asset.Size,
+                asset.Digest))
+            .ToArray() ?? [];
         var latestVersion = TryParseVersion(release.TagName);
         if (latestVersion is null)
         {
@@ -52,7 +60,8 @@ internal sealed class ReleaseUpdateService
                 release.TagName,
                 release.Name,
                 releaseUrl,
-                release.PublishedAt);
+                release.PublishedAt,
+                assets);
         }
 
         var state = CompareVersions(latestVersion, ApplicationInfo.CurrentVersion) > 0
@@ -65,7 +74,8 @@ internal sealed class ReleaseUpdateService
             ApplicationInfo.FormatVersion(latestVersion),
             release.Name,
             releaseUrl,
-            release.PublishedAt);
+            release.PublishedAt,
+            assets);
     }
 
     private static HttpClient CreateHttpClient()
@@ -116,6 +126,24 @@ internal sealed class ReleaseUpdateService
 
         [JsonPropertyName("published_at")]
         public DateTimeOffset? PublishedAt { get; init; }
+
+        [JsonPropertyName("assets")]
+        public List<GitHubReleaseAssetResponse>? Assets { get; init; }
+    }
+
+    private sealed class GitHubReleaseAssetResponse
+    {
+        [JsonPropertyName("name")]
+        public string? Name { get; init; }
+
+        [JsonPropertyName("browser_download_url")]
+        public string? BrowserDownloadUrl { get; init; }
+
+        [JsonPropertyName("size")]
+        public long Size { get; init; }
+
+        [JsonPropertyName("digest")]
+        public string? Digest { get; init; }
     }
 }
 
@@ -133,7 +161,8 @@ internal sealed record UpdateCheckResult(
     string? LatestVersionText,
     string? ReleaseName,
     string? ReleaseUrl,
-    DateTimeOffset? PublishedAt)
+    DateTimeOffset? PublishedAt,
+    IReadOnlyList<ReleaseAsset> Assets)
 {
     public static UpdateCheckResult NoRelease(string currentVersionText)
     {
@@ -143,6 +172,13 @@ internal sealed record UpdateCheckResult(
             null,
             null,
             null,
-            null);
+            null,
+            []);
     }
 }
+
+internal sealed record ReleaseAsset(
+    string Name,
+    string DownloadUrl,
+    long Size,
+    string? Digest);
