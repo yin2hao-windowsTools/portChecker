@@ -16,6 +16,7 @@ internal sealed class MainViewModel : ObservableObject
     private readonly PortMonitorService _portMonitorService = new();
     private readonly ProcessControlService _processControlService = new();
     private readonly ReservedPortRangeService _reservedPortRangeService = new();
+    private readonly ExternalLinkService _externalLinkService = new();
     private readonly BulkObservableCollection<PortEntry> _ports = [];
     private readonly BulkObservableCollection<ReservedPortRange> _reservedPortRanges = [];
     private readonly DispatcherTimer _searchDebounceTimer;
@@ -66,6 +67,10 @@ internal sealed class MainViewModel : ObservableObject
         RestartServiceCommand = new AsyncRelayCommand(RestartServiceAsync, CanControlService);
         OpenLocationCommand = new AsyncRelayCommand(OpenLocationAsync, () => !string.IsNullOrWhiteSpace(SelectedPort?.ProcessPath));
         OpenTaskManagerCommand = new AsyncRelayCommand(() => _processControlService.OpenTaskManagerAsync());
+        OpenDeveloperHomeCommand = new AsyncRelayCommand(() => _externalLinkService.OpenUrlAsync(ApplicationInfo.DeveloperHomeUrl));
+        OpenRepositoryCommand = new AsyncRelayCommand(() => _externalLinkService.OpenUrlAsync(ApplicationInfo.RepositoryUrl));
+        ShowAboutCommand = new RelayCommand(ShowAbout);
+        ShowLicenseCommand = new RelayCommand(ShowLicense);
         ClearSearchCommand = new RelayCommand(() => SearchText = string.Empty, () => !string.IsNullOrWhiteSpace(SearchText));
     }
 
@@ -106,6 +111,14 @@ internal sealed class MainViewModel : ObservableObject
         : string.Empty;
 
     public AsyncRelayCommand OpenTaskManagerCommand { get; }
+
+    public AsyncRelayCommand OpenDeveloperHomeCommand { get; }
+
+    public AsyncRelayCommand OpenRepositoryCommand { get; }
+
+    public RelayCommand ShowAboutCommand { get; }
+
+    public RelayCommand ShowLicenseCommand { get; }
 
     public RelayCommand ClearSearchCommand { get; }
 
@@ -843,6 +856,30 @@ internal sealed class MainViewModel : ObservableObject
         }
 
         await _processControlService.OpenFileLocationAsync(SelectedPort.ProcessPath);
+    }
+
+    private static void ShowAbout()
+    {
+        MessageBox.Show(
+            $"{ApplicationInfo.Name}{Environment.NewLine}" +
+            $"版本：{ApplicationInfo.CurrentVersionText}{Environment.NewLine}" +
+            $"开发者：{ApplicationInfo.DeveloperName}{Environment.NewLine}" +
+            $"仓库：{ApplicationInfo.RepositoryUrl}{Environment.NewLine}" +
+            $"许可证：{ApplicationInfo.LicenseName}{Environment.NewLine}{Environment.NewLine}" +
+            ApplicationInfo.LicenseDescription,
+            $"关于 {ApplicationInfo.Name}",
+            MessageBoxButton.OK,
+            MessageBoxImage.Information);
+    }
+
+    private static void ShowLicense()
+    {
+        MessageBox.Show(
+            $"许可证：{ApplicationInfo.LicenseName}{Environment.NewLine}{Environment.NewLine}" +
+            ApplicationInfo.LicenseDescription,
+            "许可证",
+            MessageBoxButton.OK,
+            MessageBoxImage.Information);
     }
 
     private bool FilterPort(object item)
