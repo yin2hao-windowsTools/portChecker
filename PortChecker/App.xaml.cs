@@ -11,6 +11,7 @@ public partial class App : Application
     private void ApplicationStartup(object sender, StartupEventArgs e)
     {
         PortableMode.Initialize();
+        CrashReportService.Register(this);
 
         if (ProcessControlService.TryHandleElevatedCommand(e.Args)
             || ReservedPortRangeService.TryHandleElevatedCommand(e.Args))
