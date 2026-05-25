@@ -10,6 +10,7 @@
         Background="#F5F7FB"
         FontFamily="Segoe UI"
         FontSize="13"
+        Icon="Assets/AppIcon.ico"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
