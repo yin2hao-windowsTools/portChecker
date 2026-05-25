@@ -281,6 +281,7 @@
                 <Menu Style="{StaticResource HeaderMenu}" Margin="0,0,8,0" VerticalAlignment="Center">
                     <MenuItem Header="关于" Style="{StaticResource HeaderMenuItem}">
                         <MenuItem Header="关于 Port Checker" Command="{Binding ShowAboutCommand}" />
+                        <MenuItem Header="检查更新" Command="{Binding CheckForUpdatesCommand}" />
                         <Separator />
                         <MenuItem Header="开发者主页" Command="{Binding OpenDeveloperHomeCommand}" />
                         <MenuItem Header="项目仓库" Command="{Binding OpenRepositoryCommand}" />

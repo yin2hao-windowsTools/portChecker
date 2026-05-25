@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
-    <Version>1.0.0</Version>
+    <Version>0.1.0</Version>
     <Authors>yin2hao-windowsTools</Authors>
     <RepositoryUrl>https://github.com/yin2hao-windowsTools/portChecker</RepositoryUrl>
     <Nullable>enable</Nullable>

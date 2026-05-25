@@ -17,6 +17,7 @@ internal sealed class MainViewModel : ObservableObject
     private readonly ProcessControlService _processControlService = new();
     private readonly ReservedPortRangeService _reservedPortRangeService = new();
     private readonly ExternalLinkService _externalLinkService = new();
+    private readonly ReleaseUpdateService _releaseUpdateService = new();
     private readonly BulkObservableCollection<PortEntry> _ports = [];
     private readonly BulkObservableCollection<ReservedPortRange> _reservedPortRanges = [];
     private readonly DispatcherTimer _searchDebounceTimer;
@@ -69,6 +70,7 @@ internal sealed class MainViewModel : ObservableObject
         OpenTaskManagerCommand = new AsyncRelayCommand(() => _processControlService.OpenTaskManagerAsync());
         OpenDeveloperHomeCommand = new AsyncRelayCommand(() => _externalLinkService.OpenUrlAsync(ApplicationInfo.DeveloperHomeUrl));
         OpenRepositoryCommand = new AsyncRelayCommand(() => _externalLinkService.OpenUrlAsync(ApplicationInfo.RepositoryUrl));
+        CheckForUpdatesCommand = new AsyncRelayCommand(CheckForUpdatesAsync);
         ShowAboutCommand = new RelayCommand(ShowAbout);
         ShowLicenseCommand = new RelayCommand(ShowLicense);
         ClearSearchCommand = new RelayCommand(() => SearchText = string.Empty, () => !string.IsNullOrWhiteSpace(SearchText));
@@ -115,6 +117,8 @@ internal sealed class MainViewModel : ObservableObject
     public AsyncRelayCommand OpenDeveloperHomeCommand { get; }
 
     public AsyncRelayCommand OpenRepositoryCommand { get; }
+
+    public AsyncRelayCommand CheckForUpdatesCommand { get; }
 
     public RelayCommand ShowAboutCommand { get; }
 
@@ -880,6 +884,99 @@ internal sealed class MainViewModel : ObservableObject
             "许可证",
             MessageBoxButton.OK,
             MessageBoxImage.Information);
+    }
+
+    private async Task CheckForUpdatesAsync()
+    {
+        StatusMessage = "正在检查 GitHub Release 更新...";
+
+        try
+        {
+            var result = await _releaseUpdateService.CheckLatestReleaseAsync(CancellationToken.None);
+            await ShowUpdateCheckResultAsync(result);
+        }
+        catch (Exception exception)
+        {
+            StatusMessage = $"检查更新失败：{exception.Message}";
+            MessageBox.Show(
+                StatusMessage,
+                "检查更新",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
+    private async Task ShowUpdateCheckResultAsync(UpdateCheckResult result)
+    {
+        switch (result.State)
+        {
+            case UpdateCheckState.NoRelease:
+                StatusMessage = "检查更新完成：仓库暂无可用 Release。";
+                MessageBox.Show(
+                    $"当前 GitHub 仓库还没有可用 Release。{Environment.NewLine}{Environment.NewLine}当前版本：{result.CurrentVersionText}",
+                    "检查更新",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                return;
+
+            case UpdateCheckState.VersionUnknown:
+                StatusMessage = $"检查更新完成：找到 Release {result.LatestVersionText}。";
+                await PromptOpenReleaseAsync(
+                    result,
+                    $"已找到最新 Release：{BuildReleaseTitle(result)}，但无法识别版本号。{Environment.NewLine}{Environment.NewLine}" +
+                    $"当前版本：{result.CurrentVersionText}{Environment.NewLine}" +
+                    "是否打开 Release 页面？",
+                    MessageBoxImage.Information);
+                return;
+
+            case UpdateCheckState.UpdateAvailable:
+                StatusMessage = $"发现新版本 {result.LatestVersionText}，当前版本 {result.CurrentVersionText}。";
+                await PromptOpenReleaseAsync(
+                    result,
+                    $"发现新版本：{BuildReleaseTitle(result)}{Environment.NewLine}{Environment.NewLine}" +
+                    $"当前版本：{result.CurrentVersionText}{Environment.NewLine}" +
+                    $"最新版本：{result.LatestVersionText}{Environment.NewLine}{Environment.NewLine}" +
+                    "是否打开 Release 页面？",
+                    MessageBoxImage.Question);
+                return;
+
+            case UpdateCheckState.UpToDate:
+                StatusMessage = $"当前已是最新版本 {result.CurrentVersionText}。";
+                MessageBox.Show(
+                    $"当前已是最新版本。{Environment.NewLine}{Environment.NewLine}" +
+                    $"当前版本：{result.CurrentVersionText}{Environment.NewLine}" +
+                    $"最新 Release：{BuildReleaseTitle(result)}",
+                    "检查更新",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                return;
+        }
+    }
+
+    private async Task PromptOpenReleaseAsync(UpdateCheckResult result, string message, MessageBoxImage icon)
+    {
+        var response = MessageBox.Show(
+            message,
+            "检查更新",
+            MessageBoxButton.YesNo,
+            icon,
+            MessageBoxResult.Yes);
+
+        if (response == MessageBoxResult.Yes && !string.IsNullOrWhiteSpace(result.ReleaseUrl))
+        {
+            await _externalLinkService.OpenUrlAsync(result.ReleaseUrl);
+        }
+    }
+
+    private static string BuildReleaseTitle(UpdateCheckResult result)
+    {
+        var title = !string.IsNullOrWhiteSpace(result.ReleaseName)
+            ? result.ReleaseName
+            : result.LatestVersionText ?? "未知版本";
+
+        return result.PublishedAt is null
+            ? title
+            : $"{title}（{result.PublishedAt.Value.LocalDateTime:yyyy-MM-dd HH:mm}）";
     }
 
     private bool FilterPort(object item)
