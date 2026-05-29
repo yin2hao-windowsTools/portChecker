@@ -80,7 +80,7 @@ internal sealed class UpdateInstallService
             return new UpdatePackage(
                 FindAsset(update, asset => asset.Name.EndsWith("-portable.zip", StringComparison.OrdinalIgnoreCase)),
                 PortableZipMode,
-                Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory));
+                Path.TrimEndingDirectorySeparator(PortableMode.RootDirectory));
         }
 
         var executablePath = Environment.ProcessPath;

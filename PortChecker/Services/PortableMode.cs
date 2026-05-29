@@ -6,34 +6,58 @@ internal static class PortableMode
 {
     private const string MarkerFileName = ".portable";
     private const string PortableEnvironmentVariable = "PORTCHECKER_PORTABLE";
+    private const string PortableRootEnvironmentVariable = "PORTCHECKER_PORTABLE_ROOT";
 
     public static bool IsEnabled { get; private set; }
+    public static string RootDirectory { get; private set; } = AppContext.BaseDirectory;
 
     public static void Initialize()
     {
-        var baseDirectory = AppContext.BaseDirectory;
-        IsEnabled = IsPortableRequested(baseDirectory);
+        var resolvedBaseDirectory = ResolvePortableRoot(AppContext.BaseDirectory);
+        IsEnabled = resolvedBaseDirectory is not null;
         if (!IsEnabled)
         {
             return;
         }
 
+        var baseDirectory = resolvedBaseDirectory!;
+        RootDirectory = baseDirectory;
         Directory.SetCurrentDirectory(baseDirectory);
 
         var tempDirectory = GetLocalTempDirectory(baseDirectory);
         SetProcessEnvironment("PORTCHECKER_DATA_DIR", Path.Combine(baseDirectory, "data"));
+        SetProcessEnvironment(PortableRootEnvironmentVariable, baseDirectory);
         SetProcessEnvironment("DOTNET_BUNDLE_EXTRACT_BASE_DIR", tempDirectory);
         SetProcessEnvironment("TEMP", tempDirectory);
         SetProcessEnvironment("TMP", tempDirectory);
     }
 
-    private static bool IsPortableRequested(string baseDirectory)
+    private static string? ResolvePortableRoot(string baseDirectory)
     {
+        var configuredRoot = Environment.GetEnvironmentVariable(PortableRootEnvironmentVariable);
+        if (!string.IsNullOrWhiteSpace(configuredRoot))
+        {
+            return configuredRoot;
+        }
+
+        if (File.Exists(Path.Combine(baseDirectory, MarkerFileName)))
+        {
+            return baseDirectory;
+        }
+
+        var parentDirectory = Directory.GetParent(Path.TrimEndingDirectorySeparator(baseDirectory))?.FullName;
+        if (!string.IsNullOrWhiteSpace(parentDirectory)
+            && File.Exists(Path.Combine(parentDirectory, MarkerFileName)))
+        {
+            return parentDirectory;
+        }
+
         return string.Equals(
-                Environment.GetEnvironmentVariable(PortableEnvironmentVariable),
-                "1",
-                StringComparison.OrdinalIgnoreCase)
-            || File.Exists(Path.Combine(baseDirectory, MarkerFileName));
+            Environment.GetEnvironmentVariable(PortableEnvironmentVariable),
+            "1",
+            StringComparison.OrdinalIgnoreCase)
+            ? baseDirectory
+            : null;
     }
 
     private static string GetLocalTempDirectory(string baseDirectory)

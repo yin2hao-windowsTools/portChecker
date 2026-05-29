@@ -12,6 +12,8 @@
     <ApplicationIcon>..\PortChecker\Assets\AppIcon.ico</ApplicationIcon>
     <AssemblyName>PortCheckerSetup</AssemblyName>
     <RootNamespace>PortChecker.SetupBootstrapper</RootNamespace>
+    <BootstrapperMode Condition="'$(BootstrapperMode)' == ''">Setup</BootstrapperMode>
+    <PortableTargetPath Condition="'$(PortableTargetPath)' == ''">app\PortChecker.exe</PortableTargetPath>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -20,6 +22,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>PortCheckerBootstrapperMode</_Parameter1>
+      <_Parameter2>$(BootstrapperMode)</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>PortCheckerPortableTargetPath</_Parameter1>
+      <_Parameter2>$(PortableTargetPath)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(BootstrapperMode)' == 'Setup'">
     <EmbeddedResource Include="$(PayloadPath)" LogicalName="PortChecker.Payload.msi" />
   </ItemGroup>
 

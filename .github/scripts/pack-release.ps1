@@ -43,12 +43,15 @@ function Invoke-DotNetPublish {
         [Parameter(Mandatory = $true)]
         [bool] $SelfContained,
 
-        [bool] $ReadyToRun = $false
+        [bool] $ReadyToRun = $false,
+
+        [bool] $UseAppHost = $true
     )
 
     $singleFileValue = $SingleFile.ToString().ToLowerInvariant()
     $selfContainedValue = $SelfContained.ToString().ToLowerInvariant()
     $readyToRunValue = $ReadyToRun.ToString().ToLowerInvariant()
+    $useAppHostValue = $UseAppHost.ToString().ToLowerInvariant()
     dotnet publish $projectFullPath `
         --configuration $Configuration `
         --runtime $Runtime `
@@ -60,6 +63,7 @@ function Invoke-DotNetPublish {
         -p:InformationalVersion=$Version `
         -p:PublishSingleFile=$singleFileValue `
         -p:PublishReadyToRun=$readyToRunValue `
+        -p:UseAppHost=$useAppHostValue `
         -p:IncludeNativeLibrariesForSelfExtract=$singleFileValue `
         -p:DebugType=none `
         -p:DebugSymbols=false
@@ -97,6 +101,37 @@ function Build-SetupBootstrapper {
     }
 
     Copy-Item -LiteralPath (Join-Path $publishPath "PortCheckerSetup.exe") -Destination $DestinationPath -Force
+}
+
+function Build-PortableLauncher {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $TargetRelativePath,
+
+        [Parameter(Mandatory = $true)]
+        [string] $DestinationPath
+    )
+
+    $publishPath = Join-Path $publishRoot "portable-launcher"
+    dotnet publish $bootstrapperProjectPath `
+        --configuration $Configuration `
+        --runtime $Runtime `
+        --output $publishPath `
+        -p:Version=$Version `
+        -p:AssemblyVersion=$assemblyVersion `
+        -p:FileVersion=$assemblyVersion `
+        -p:InformationalVersion=$Version `
+        -p:BootstrapperMode=Portable `
+        -p:PortableTargetPath=$TargetRelativePath `
+        -p:AssemblyName=PortChecker `
+        -p:DebugType=none `
+        -p:DebugSymbols=false
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "portable launcher publish failed with exit code $LASTEXITCODE."
+    }
+
+    Copy-Item -LiteralPath (Join-Path $publishPath "PortChecker.exe") -Destination $DestinationPath -Force
 }
 
 function Get-WixCommand {
@@ -293,10 +328,12 @@ function New-WixSource {
 }
 
 $portablePublishPath = Join-Path $publishRoot "portable"
+$portableAppPath = Join-Path $portablePublishPath "app"
 $msiPublishPath = Join-Path $publishRoot "msi"
 $msiPath = Join-Path $distPath "$assetPrefix.msi"
 
-Invoke-DotNetPublish -PublishPath $portablePublishPath -SingleFile $false -SelfContained $true -ReadyToRun $true
+Invoke-DotNetPublish -PublishPath $portableAppPath -SingleFile $false -SelfContained $false -UseAppHost $true
+Build-PortableLauncher -TargetRelativePath "app\PortChecker.exe" -DestinationPath (Join-Path $portablePublishPath "PortChecker.exe")
 New-Item -ItemType File -Force -Path (Join-Path $portablePublishPath ".portable") | Out-Null
 $portableFiles = Get-ChildItem -LiteralPath $portablePublishPath -Force | ForEach-Object { $_.FullName }
 Compress-Archive -LiteralPath $portableFiles -DestinationPath (Join-Path $distPath "$assetPrefix-portable.zip") -Force

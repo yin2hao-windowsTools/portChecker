@@ -10,58 +10,120 @@ internal static partial class Program
     private const string AppName = "Port Checker";
     private const string PayloadResourceName = "PortChecker.Payload.msi";
     private const string DotNetDownloadUrl = "https://dotnet.microsoft.com/download/dotnet/8.0";
+    private const string BootstrapperModeMetadataName = "PortCheckerBootstrapperMode";
+    private const string PortableTargetPathMetadataName = "PortCheckerPortableTargetPath";
     private const uint MbIconError = 0x10;
-    private const uint MbIconInformation = 0x40;
     private const uint MbIconQuestion = 0x20;
     private const uint MbYesNo = 0x04;
     private const uint IdYes = 6;
 
     [STAThread]
-    private static int Main()
+    private static int Main(string[] args)
     {
         try
         {
-            if (!HasDesktopRuntime8())
+            return GetBootstrapperMode() switch
             {
-                var message =
-                    "此安装包需要 .NET 8 Desktop Runtime (x64) 才能继续安装。"
-                    + Environment.NewLine
-                    + Environment.NewLine
-                    + "是否现在打开微软官方下载页？";
-
-                if (MessageBox(IntPtr.Zero, message, $"{AppName} Setup", MbYesNo | MbIconQuestion) == IdYes)
-                {
-                    OpenUrl(DotNetDownloadUrl);
-                }
-
-                return 1;
-            }
-
-            var payloadPath = ExtractPayloadToTemp();
-            LaunchMsiInstaller(payloadPath);
-            return 0;
+                "portable" => RunPortableLauncher(args),
+                _ => RunSetupBootstrapper()
+            };
         }
         catch (Exception exception)
         {
-            var message = "安装引导程序启动失败。"
-                + Environment.NewLine
-                + Environment.NewLine
-                + exception.Message;
-            MessageBox(IntPtr.Zero, message, $"{AppName} Setup", MbIconError);
+            var caption = GetBootstrapperMode() == "portable"
+                ? AppName
+                : $"{AppName} Setup";
+            var message = GetBootstrapperMode() == "portable"
+                ? "便携版启动器启动失败。"
+                : "安装引导程序启动失败。";
+
+            MessageBox(
+                IntPtr.Zero,
+                message + Environment.NewLine + Environment.NewLine + exception.Message,
+                caption,
+                MbIconError);
             return 1;
         }
     }
 
-    private static bool HasDesktopRuntime8()
+    private static int RunSetupBootstrapper()
     {
-        var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-        if (string.IsNullOrWhiteSpace(programFiles))
+        if (!HasDesktopRuntime8())
         {
-            return false;
+            var message =
+                "此安装包需要 .NET 8 Desktop Runtime (x64) 才能继续安装。"
+                + Environment.NewLine
+                + Environment.NewLine
+                + "是否现在打开微软官方下载页？";
+
+            if (MessageBox(IntPtr.Zero, message, $"{AppName} Setup", MbYesNo | MbIconQuestion) == IdYes)
+            {
+                OpenUrl(DotNetDownloadUrl);
+            }
+
+            return 1;
         }
 
-        var runtimeRoot = Path.Combine(programFiles, "dotnet", "shared", "Microsoft.WindowsDesktop.App");
-        if (!Directory.Exists(runtimeRoot))
+        var payloadPath = ExtractPayloadToTemp();
+        LaunchMsiInstaller(payloadPath);
+        return 0;
+    }
+
+    private static int RunPortableLauncher(IReadOnlyList<string> args)
+    {
+        if (!HasDesktopRuntime8())
+        {
+            var message =
+                "此便携版需要 .NET 8 Desktop Runtime (x64) 才能启动。"
+                + Environment.NewLine
+                + Environment.NewLine
+                + "是否现在打开微软官方下载页？";
+
+            if (MessageBox(IntPtr.Zero, message, AppName, MbYesNo | MbIconQuestion) == IdYes)
+            {
+                OpenUrl(DotNetDownloadUrl);
+            }
+
+            return 1;
+        }
+
+        var portableRoot = AppContext.BaseDirectory;
+        var targetRelativePath = GetAssemblyMetadata(PortableTargetPathMetadataName);
+        if (string.IsNullOrWhiteSpace(targetRelativePath))
+        {
+            throw new InvalidOperationException("未配置便携版主程序路径。");
+        }
+
+        var targetPath = Path.GetFullPath(Path.Combine(portableRoot, targetRelativePath));
+        if (!File.Exists(targetPath))
+        {
+            throw new FileNotFoundException("未找到便携版主程序。", targetPath);
+        }
+
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = targetPath,
+            UseShellExecute = true,
+            WorkingDirectory = portableRoot
+        };
+
+        foreach (var argument in args)
+        {
+            startInfo.ArgumentList.Add(argument);
+        }
+
+        if (Process.Start(startInfo) is null)
+        {
+            throw new InvalidOperationException("未能启动便携版主程序。");
+        }
+
+        return 0;
+    }
+
+    private static bool HasDesktopRuntime8()
+    {
+        var runtimeRoot = GetDesktopRuntimeRoot();
+        if (string.IsNullOrWhiteSpace(runtimeRoot) || !Directory.Exists(runtimeRoot))
         {
             return false;
         }
@@ -76,6 +138,17 @@ internal static partial class Program
         }
 
         return false;
+    }
+
+    private static string? GetDesktopRuntimeRoot()
+    {
+        var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+        if (string.IsNullOrWhiteSpace(programFiles))
+        {
+            return null;
+        }
+
+        return Path.Combine(programFiles, "dotnet", "shared", "Microsoft.WindowsDesktop.App");
     }
 
     private static string ExtractPayloadToTemp()
@@ -121,6 +194,22 @@ internal static partial class Program
         {
             throw new InvalidOperationException("未能打开下载页面。");
         }
+    }
+
+    private static string GetBootstrapperMode()
+    {
+        var mode = GetAssemblyMetadata(BootstrapperModeMetadataName);
+        return string.IsNullOrWhiteSpace(mode)
+            ? "setup"
+            : mode.Trim().ToLowerInvariant();
+    }
+
+    private static string? GetAssemblyMetadata(string key)
+    {
+        return Assembly.GetExecutingAssembly()
+            .GetCustomAttributes<AssemblyMetadataAttribute>()
+            .FirstOrDefault(attribute => attribute.Key.Equals(key, StringComparison.Ordinal))
+            ?.Value;
     }
 
     private static string ThisAssemblyVersion
