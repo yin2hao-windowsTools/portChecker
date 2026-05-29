@@ -7,7 +7,7 @@
         Height="820"
         MinWidth="1120"
         MinHeight="720"
-        Background="#F6F8FC"
+        Background="{DynamicResource WindowBackgroundBrush}"
         FontFamily="Segoe UI"
         FontSize="13"
         Icon="Assets/AppIcon.ico"
@@ -21,8 +21,25 @@
         <SolidColorBrush x:Key="MutedBrush" Color="#667085" />
         <SolidColorBrush x:Key="SubtleBrush" Color="#98A2B3" />
         <SolidColorBrush x:Key="LineBrush" Color="#DCE5F2" />
+        <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#F6F8FC" />
         <SolidColorBrush x:Key="PanelBrush" Color="#FFFFFF" />
         <SolidColorBrush x:Key="PanelAltBrush" Color="#F8FAFD" />
+        <SolidColorBrush x:Key="ControlBrush" Color="#FDFEFF" />
+        <SolidColorBrush x:Key="SecondaryButtonHoverBrush" Color="#F3F7FD" />
+        <SolidColorBrush x:Key="DataGridHeaderBrush" Color="#F6F9FD" />
+        <SolidColorBrush x:Key="DataGridAltRowBrush" Color="#FBFCFE" />
+        <SolidColorBrush x:Key="RowBorderBrush" Color="#EEF2F7" />
+        <SolidColorBrush x:Key="PermissionPanelBrush" Color="#F8FBFF" />
+        <SolidColorBrush x:Key="PermissionBorderBrush" Color="#CFE0FF" />
+        <SolidColorBrush x:Key="BadgeBrush" Color="#EAF2FF" />
+        <SolidColorBrush x:Key="EmptyPanelBrush" Color="#F8FAFD" />
+        <SolidColorBrush x:Key="PlaceholderBrush" Color="#8D98AA" />
+        <SolidColorBrush x:Key="WarningBorderBrush" Color="#FED7AA" />
+        <SolidColorBrush x:Key="WarningTextBrush" Color="#9A3412" />
+        <SolidColorBrush x:Key="InfoPanelBrush" Color="#EEF6FF" />
+        <SolidColorBrush x:Key="InfoBorderBrush" Color="#BFDBFE" />
+        <SolidColorBrush x:Key="InfoTextBrush" Color="#1E40AF" />
+        <SolidColorBrush x:Key="DangerHoverBrush" Color="#B91C1C" />
         <SolidColorBrush x:Key="HoverBrush" Color="#F2F7FF" />
         <SolidColorBrush x:Key="SelectedBrush" Color="#EAF2FF" />
         <SolidColorBrush x:Key="AccentBrush" Color="#2563EB" />
@@ -111,11 +128,11 @@
 
         <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
             <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
-            <Setter Property="Background" Value="#FFFFFF" />
+            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#F3F7FD" />
+                    <Setter Property="Background" Value="{StaticResource SecondaryButtonHoverBrush}" />
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -125,7 +142,7 @@
             <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#B91C1C" />
+                    <Setter Property="Background" Value="{StaticResource DangerHoverBrush}" />
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -144,12 +161,33 @@
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
 
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+            <Setter Property="Padding" Value="10,6" />
+            <Style.Triggers>
+                <Trigger Property="IsHighlighted" Value="True">
+                    <Setter Property="Background" Value="{StaticResource HoverBrush}" />
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="{StaticResource SelectedBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="MenuItem">
+            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
+        </Style>
+
         <Style x:Key="TextBoxStyle" TargetType="TextBox">
             <Setter Property="MinHeight" Value="36" />
             <Setter Property="Padding" Value="12,7" />
             <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Background" Value="#FDFEFF" />
+            <Setter Property="Background" Value="{StaticResource ControlBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="CaretBrush" Value="{StaticResource AccentBrush}" />
             <Setter Property="Template">
@@ -187,7 +225,8 @@
             <Setter Property="Padding" Value="10,6" />
             <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Background" Value="#FDFEFF" />
+            <Setter Property="Background" Value="{StaticResource ControlBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
 
@@ -257,15 +296,16 @@
             <Setter Property="RowHeight" Value="40" />
             <Setter Property="ColumnHeaderHeight" Value="40" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Background" Value="White" />
-            <Setter Property="AlternatingRowBackground" Value="#FBFCFE" />
+            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+            <Setter Property="AlternatingRowBackground" Value="{StaticResource DataGridAltRowBrush}" />
             <Setter Property="SelectionMode" Value="Single" />
             <Setter Property="SelectionUnit" Value="FullRow" />
             <Setter Property="RowHeaderWidth" Value="0" />
         </Style>
 
         <Style TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="#F6F9FD" />
+            <Setter Property="Background" Value="{StaticResource DataGridHeaderBrush}" />
             <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
@@ -274,6 +314,7 @@
         </Style>
 
         <Style TargetType="DataGridCell">
+            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="10,0" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -282,7 +323,7 @@
 
         <Style TargetType="DataGridRow">
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="#EEF2F7" />
+            <Setter Property="BorderBrush" Value="{StaticResource RowBorderBrush}" />
             <Setter Property="BorderThickness" Value="0,0,0,1" />
             <Setter Property="SnapsToDevicePixels" Value="True" />
             <Style.Triggers>
@@ -335,8 +376,8 @@
             </StackPanel>
 
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                <Border Background="#F8FBFF"
-                        BorderBrush="#CFE0FF"
+                <Border Background="{StaticResource PermissionPanelBrush}"
+                        BorderBrush="{StaticResource PermissionBorderBrush}"
                         BorderThickness="1"
                         CornerRadius="6"
                         Padding="14,9"
@@ -353,6 +394,19 @@
                                    VerticalAlignment="Center" />
                     </StackPanel>
                 </Border>
+
+                <Button Command="{Binding ToggleThemeCommand}"
+                        Style="{StaticResource SecondaryButton}"
+                        ToolTip="{Binding ThemeToggleToolTip}"
+                        Margin="0,0,10,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE708;"
+                                   Style="{StaticResource IconGlyph}"
+                                   Foreground="{StaticResource MutedBrush}"
+                                   Margin="0,0,8,0" />
+                        <TextBlock Text="{Binding ThemeToggleText}" />
+                    </StackPanel>
+                </Button>
 
                 <Menu Style="{StaticResource HeaderMenu}" Margin="0,0,10,0">
                     <MenuItem Header="更多" Style="{StaticResource HeaderMenuItem}">
@@ -384,7 +438,7 @@
                                    Style="{StaticResource IconGlyph}"
                                    Foreground="White"
                                    Margin="0,0,8,0" />
-                        <TextBlock Text="刷新" />
+                        <TextBlock Text="刷新" Foreground="White" />
                     </StackPanel>
                 </Button>
             </StackPanel>
@@ -546,7 +600,7 @@
                                        Margin="13,0,0,0"
                                        IsHitTestVisible="False" />
                             <TextBlock Text="搜索端口、PID、进程、服务或路径"
-                                       Foreground="#8D98AA"
+                                       Foreground="{StaticResource PlaceholderBrush}"
                                        Margin="38,0,42,0"
                                        VerticalAlignment="Center"
                                        IsHitTestVisible="False"
@@ -601,7 +655,7 @@
                             <DataGridTemplateColumn Header="协议" Width="72">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Border Background="#EAF2FF"
+                                        <Border Background="{StaticResource BadgeBrush}"
                                                 CornerRadius="4"
                                                 Padding="7,3"
                                                 HorizontalAlignment="Left">
@@ -641,7 +695,7 @@
                     </DataGrid>
 
                     <Border Grid.Row="1"
-                            Background="#F8FAFD"
+                            Background="{StaticResource EmptyPanelBrush}"
                             BorderBrush="{StaticResource LineBrush}"
                             BorderThickness="1"
                             CornerRadius="6"
@@ -682,7 +736,7 @@
                                        Margin="0,3,0,0" />
                         </StackPanel>
                         <Border Grid.Column="1"
-                                Background="#EAF2FF"
+                                Background="{StaticResource BadgeBrush}"
                                 CornerRadius="4"
                                 Padding="10,5"
                                 VerticalAlignment="Top">
@@ -721,7 +775,7 @@
                                        Margin="0,0,0,14" />
 
                             <Border Background="{StaticResource WarningSoftBrush}"
-                                    BorderBrush="#FED7AA"
+                                    BorderBrush="{StaticResource WarningBorderBrush}"
                                     BorderThickness="1"
                                     CornerRadius="8"
                                     Padding="12"
@@ -739,20 +793,20 @@
                                                VerticalAlignment="Top" />
                                     <TextBlock Grid.Column="1"
                                                Text="{Binding ServiceOperationRiskText}"
-                                               Foreground="#9A3412"
+                                               Foreground="{StaticResource WarningTextBrush}"
                                                TextWrapping="Wrap" />
                                 </Grid>
                             </Border>
 
-                            <Border Background="#EEF6FF"
-                                    BorderBrush="#BFDBFE"
+                            <Border Background="{StaticResource InfoPanelBrush}"
+                                    BorderBrush="{StaticResource InfoBorderBrush}"
                                     BorderThickness="1"
                                     CornerRadius="8"
                                     Padding="12"
                                     Margin="0,0,0,10"
                                     Visibility="{Binding ServiceOperationResult, Converter={StaticResource StringToVisibilityConverter}}">
                                 <TextBlock Text="{Binding ServiceOperationResult}"
-                                           Foreground="#1E40AF"
+                                           Foreground="{StaticResource InfoTextBrush}"
                                            TextWrapping="Wrap" />
                             </Border>
 
@@ -895,7 +949,7 @@
                             </DataGrid.Columns>
                         </DataGrid>
 
-                        <Border Background="#F8FAFD"
+                        <Border Background="{StaticResource EmptyPanelBrush}"
                                 BorderBrush="{StaticResource LineBrush}"
                                 BorderThickness="1"
                                 CornerRadius="6"
@@ -1037,7 +1091,7 @@
                                            Style="{StaticResource IconGlyph}"
                                            Foreground="White"
                                            Margin="0,0,8,0" />
-                                <TextBlock Text="添加范围" />
+                                <TextBlock Text="添加范围" Foreground="White" />
                             </StackPanel>
                         </Button>
 

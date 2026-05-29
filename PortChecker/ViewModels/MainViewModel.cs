@@ -37,6 +37,7 @@ internal sealed class MainViewModel : ObservableObject
     private string _reservedPortCount = "1";
     private bool _isRefreshingReservedPorts;
     private bool _isManagingReservedPort;
+    private bool _isDarkMode;
     private string _reservedPortStatusMessage = "保留端口尚未刷新";
     private string _emptyReservedPortMessage = string.Empty;
     private bool _isRefreshing;
@@ -81,6 +82,7 @@ internal sealed class MainViewModel : ObservableObject
         ShowAboutCommand = new RelayCommand(ShowAbout);
         ShowLicenseCommand = new RelayCommand(ShowLicense);
         ClearSearchCommand = new RelayCommand(() => SearchText = string.Empty, () => !string.IsNullOrWhiteSpace(SearchText));
+        ToggleThemeCommand = new RelayCommand(() => IsDarkMode = !IsDarkMode);
     }
 
     public ICollectionView PortsView { get; }
@@ -132,6 +134,8 @@ internal sealed class MainViewModel : ObservableObject
     public RelayCommand ShowLicenseCommand { get; }
 
     public RelayCommand ClearSearchCommand { get; }
+
+    public RelayCommand ToggleThemeCommand { get; }
 
     public string SearchText
     {
@@ -308,6 +312,23 @@ internal sealed class MainViewModel : ObservableObject
             }
         }
     }
+
+    public bool IsDarkMode
+    {
+        get => _isDarkMode;
+        private set
+        {
+            if (SetProperty(ref _isDarkMode, value))
+            {
+                OnPropertyChanged(nameof(ThemeToggleText));
+                OnPropertyChanged(nameof(ThemeToggleToolTip));
+            }
+        }
+    }
+
+    public string ThemeToggleText => IsDarkMode ? "日间模式" : "黑夜模式";
+
+    public string ThemeToggleToolTip => IsDarkMode ? "切换到日间模式" : "切换到黑夜模式";
 
     public string StatusMessage
     {
