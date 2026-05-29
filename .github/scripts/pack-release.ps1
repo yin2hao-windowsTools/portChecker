@@ -22,6 +22,7 @@ $outputFullPath = Join-Path $repositoryRoot $OutputRoot
 $publishRoot = Join-Path $outputFullPath "publish"
 $distPath = Join-Path $outputFullPath "dist"
 $wixWorkPath = Join-Path $outputFullPath "wix"
+$bootstrapperProjectPath = Join-Path $repositoryRoot "PortChecker.SetupBootstrapper\PortChecker.SetupBootstrapper.csproj"
 $assemblyVersion = "$ProductVersion.0"
 $assetPrefix = "PortChecker-$Version-$Runtime"
 
@@ -37,24 +38,65 @@ function Invoke-DotNetPublish {
         [string] $PublishPath,
 
         [Parameter(Mandatory = $true)]
-        [bool] $SingleFile
+        [bool] $SingleFile,
+
+        [Parameter(Mandatory = $true)]
+        [bool] $SelfContained,
+
+        [bool] $ReadyToRun = $false
     )
 
     $singleFileValue = $SingleFile.ToString().ToLowerInvariant()
+    $selfContainedValue = $SelfContained.ToString().ToLowerInvariant()
+    $readyToRunValue = $ReadyToRun.ToString().ToLowerInvariant()
     dotnet publish $projectFullPath `
         --configuration $Configuration `
         --runtime $Runtime `
-        --self-contained true `
+        --self-contained $selfContainedValue `
         --output $PublishPath `
         -p:Version=$Version `
         -p:AssemblyVersion=$assemblyVersion `
         -p:FileVersion=$assemblyVersion `
         -p:InformationalVersion=$Version `
         -p:PublishSingleFile=$singleFileValue `
-        -p:PublishReadyToRun=true `
+        -p:PublishReadyToRun=$readyToRunValue `
         -p:IncludeNativeLibrariesForSelfExtract=$singleFileValue `
         -p:DebugType=none `
         -p:DebugSymbols=false
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "dotnet publish failed with exit code $LASTEXITCODE."
+    }
+}
+
+function Build-SetupBootstrapper {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $PayloadPath,
+
+        [Parameter(Mandatory = $true)]
+        [string] $DestinationPath
+    )
+
+    $publishPath = Join-Path $publishRoot "setup"
+    dotnet publish $bootstrapperProjectPath `
+        --configuration $Configuration `
+        --runtime $Runtime `
+        --output $publishPath `
+        -p:Version=$Version `
+        -p:AssemblyVersion=$assemblyVersion `
+        -p:FileVersion=$assemblyVersion `
+        -p:InformationalVersion=$Version `
+        -p:PayloadPath=$PayloadPath `
+        -p:SetupVersion=$Version `
+        -p:DebugType=none `
+        -p:DebugSymbols=false
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "setup bootstrapper publish failed with exit code $LASTEXITCODE."
+    }
+
+    Copy-Item -LiteralPath (Join-Path $publishPath "PortCheckerSetup.exe") -Destination $DestinationPath -Force
 }
 
 function Get-WixCommand {
@@ -111,6 +153,19 @@ function Get-WixId {
     return "$Prefix$hex"
 }
 
+function Get-RelativePath {
+    param(
+        [Parameter(Mandatory = $true)][string] $BasePath,
+        [Parameter(Mandatory = $true)][string] $TargetPath
+    )
+
+    $normalizedBasePath = ((Resolve-Path -LiteralPath $BasePath).Path).TrimEnd('\', '/')
+    $baseUri = [Uri]($normalizedBasePath + [IO.Path]::DirectorySeparatorChar)
+    $targetUri = [Uri]((Resolve-Path -LiteralPath $TargetPath).Path)
+    $relativeUri = $baseUri.MakeRelativeUri($targetUri)
+    return [Uri]::UnescapeDataString($relativeUri.ToString()).Replace('/', [IO.Path]::DirectorySeparatorChar)
+}
+
 function Write-DirectoryNode {
     param(
         [Parameter(Mandatory = $true)]
@@ -128,7 +183,7 @@ function Write-DirectoryNode {
 
     $files = Get-ChildItem -LiteralPath $Directory.FullName -File | Sort-Object FullName
     foreach ($file in $files) {
-        $relativePath = [IO.Path]::GetRelativePath($SourceRoot, $file.FullName)
+        $relativePath = Get-RelativePath -BasePath $SourceRoot -TargetPath $file.FullName
         $componentId = Get-WixId "cmp" $relativePath
         $fileId = Get-WixId "fil" $relativePath
 
@@ -148,7 +203,7 @@ function Write-DirectoryNode {
 
     $directories = Get-ChildItem -LiteralPath $Directory.FullName -Directory | Sort-Object FullName
     foreach ($childDirectory in $directories) {
-        $relativePath = [IO.Path]::GetRelativePath($SourceRoot, $childDirectory.FullName)
+        $relativePath = Get-RelativePath -BasePath $SourceRoot -TargetPath $childDirectory.FullName
         $directoryId = Get-WixId "dir" $relativePath
 
         $Writer.WriteStartElement("Directory")
@@ -180,6 +235,25 @@ function New-WixSource {
         $writer.WriteAttributeString("Version", $ProductVersion)
         $writer.WriteAttributeString("UpgradeCode", "{B84256A8-A3B4-4FB4-B445-4A42E7A84EEA}")
         $writer.WriteAttributeString("Scope", "perMachine")
+
+        $writer.WriteStartElement("Property")
+        $writer.WriteAttributeString("Id", "DOTNET_DESKTOP_RUNTIME_DIR")
+        $writer.WriteStartElement("DirectorySearch")
+        $writer.WriteAttributeString("Id", "DotNetRootSearch")
+        $writer.WriteAttributeString("Path", "[ProgramFiles64Folder]dotnet\shared\Microsoft.WindowsDesktop.App")
+        $writer.WriteStartElement("DirectorySearch")
+        $writer.WriteAttributeString("Id", "DotNetRuntimeEightSearch")
+        $writer.WriteAttributeString("Path", "8.*")
+        $writer.WriteAttributeString("AssignToProperty", "yes")
+        $writer.WriteEndElement()
+        $writer.WriteEndElement()
+        $writer.WriteEndElement()
+
+        $launchMessage = '.NET 8 Desktop Runtime (x64) is required. Please use setup.exe or install the runtime from https://dotnet.microsoft.com/download/dotnet/8.0 and try again.'
+        $writer.WriteStartElement("Launch")
+        $writer.WriteAttributeString("Condition", "Installed OR DOTNET_DESKTOP_RUNTIME_DIR")
+        $writer.WriteAttributeString("Message", $launchMessage)
+        $writer.WriteEndElement()
 
         $writer.WriteStartElement("MajorUpgrade")
         $writer.WriteAttributeString("DowngradeErrorMessage", "A newer version of Port Checker is already installed.")
@@ -218,27 +292,25 @@ function New-WixSource {
     }
 }
 
-$exePublishPath = Join-Path $publishRoot "exe"
 $portablePublishPath = Join-Path $publishRoot "portable"
 $msiPublishPath = Join-Path $publishRoot "msi"
+$msiPath = Join-Path $distPath "$assetPrefix.msi"
 
-Invoke-DotNetPublish -PublishPath $exePublishPath -SingleFile $true
-Copy-Item -LiteralPath (Join-Path $exePublishPath "PortChecker.exe") -Destination (Join-Path $distPath "$assetPrefix.exe")
-
-Invoke-DotNetPublish -PublishPath $portablePublishPath -SingleFile $false
+Invoke-DotNetPublish -PublishPath $portablePublishPath -SingleFile $false -SelfContained $true -ReadyToRun $true
 New-Item -ItemType File -Force -Path (Join-Path $portablePublishPath ".portable") | Out-Null
 $portableFiles = Get-ChildItem -LiteralPath $portablePublishPath -Force | ForEach-Object { $_.FullName }
 Compress-Archive -LiteralPath $portableFiles -DestinationPath (Join-Path $distPath "$assetPrefix-portable.zip") -Force
 
-Invoke-DotNetPublish -PublishPath $msiPublishPath -SingleFile $false
+Invoke-DotNetPublish -PublishPath $msiPublishPath -SingleFile $false -SelfContained $false
 $wixSourcePath = Join-Path $wixWorkPath "PortChecker.wxs"
-$msiPath = Join-Path $distPath "$assetPrefix.msi"
 New-WixSource -SourcePath $msiPublishPath -DestinationPath $wixSourcePath
 $wixCommand = Get-WixCommand
 & $wixCommand build $wixSourcePath -arch x64 -o $msiPath
 if ($LASTEXITCODE -ne 0) {
     throw "WiX build failed with exit code $LASTEXITCODE."
 }
+
+Build-SetupBootstrapper -PayloadPath $msiPath -DestinationPath (Join-Path $distPath "$assetPrefix.exe")
 
 Get-ChildItem -LiteralPath $distPath -Filter "*.wixpdb" -File | Remove-Item -Force
 

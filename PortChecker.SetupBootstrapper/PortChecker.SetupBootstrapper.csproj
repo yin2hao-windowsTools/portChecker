@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PublishAot>true</PublishAot>
+    <SelfContained>true</SelfContained>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ApplicationIcon>..\PortChecker\Assets\AppIcon.ico</ApplicationIcon>
+    <AssemblyName>PortCheckerSetup</AssemblyName>
+    <RootNamespace>PortChecker.SetupBootstrapper</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PayloadPath Condition="'$(PayloadPath)' == ''">missing-payload.msi</PayloadPath>
+    <SetupVersion Condition="'$(SetupVersion)' == ''">0.0.0</SetupVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="$(PayloadPath)" LogicalName="PortChecker.Payload.msi" />
+  </ItemGroup>
+
+</Project>

@@ -15,7 +15,6 @@ namespace PortChecker.Services;
 internal sealed class UpdateInstallService
 {
     private const string PortableZipMode = "portableZip";
-    private const string SingleExeMode = "singleExe";
     private const string MsiMode = "msi";
     private static readonly HttpClient HttpClient = CreateHttpClient();
 
@@ -99,8 +98,8 @@ internal sealed class UpdateInstallService
         }
 
         return new UpdatePackage(
-            FindAsset(update, asset => asset.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)),
-            SingleExeMode,
+            FindAsset(update, asset => asset.Name.EndsWith(".msi", StringComparison.OrdinalIgnoreCase)),
+            MsiMode,
             executablePath);
     }
 
@@ -402,9 +401,6 @@ try {
             Get-ChildItem -LiteralPath $PayloadPath -Force | ForEach-Object {
                 Copy-Item -LiteralPath $_.FullName -Destination $TargetPath -Recurse -Force
             }
-        }
-        "singleExe" {
-            Copy-Item -LiteralPath $PayloadPath -Destination $TargetPath -Force
         }
         "msi" {
             $process = Start-Process -FilePath "msiexec.exe" -ArgumentList @("/i", $PayloadPath, "/passive", "/norestart") -Wait -PassThru
