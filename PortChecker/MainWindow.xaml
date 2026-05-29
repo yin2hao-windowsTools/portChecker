@@ -3,11 +3,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:converters="clr-namespace:PortChecker.Converters"
         Title="Port Checker"
-        Width="1280"
-        Height="860"
-        MinWidth="1080"
-        MinHeight="760"
-        Background="#F5F7FB"
+        Width="1420"
+        Height="820"
+        MinWidth="1120"
+        MinHeight="720"
+        Background="#F6F8FC"
         FontFamily="Segoe UI"
         FontSize="13"
         Icon="Assets/AppIcon.ico"
@@ -19,16 +19,46 @@
 
         <SolidColorBrush x:Key="InkBrush" Color="#111827" />
         <SolidColorBrush x:Key="MutedBrush" Color="#667085" />
-        <SolidColorBrush x:Key="LineBrush" Color="#D9E2EF" />
+        <SolidColorBrush x:Key="SubtleBrush" Color="#98A2B3" />
+        <SolidColorBrush x:Key="LineBrush" Color="#DCE5F2" />
         <SolidColorBrush x:Key="PanelBrush" Color="#FFFFFF" />
         <SolidColorBrush x:Key="PanelAltBrush" Color="#F8FAFD" />
-        <SolidColorBrush x:Key="HoverBrush" Color="#F1F7FF" />
-        <SolidColorBrush x:Key="SelectedBrush" Color="#E8F1FF" />
+        <SolidColorBrush x:Key="HoverBrush" Color="#F2F7FF" />
+        <SolidColorBrush x:Key="SelectedBrush" Color="#EAF2FF" />
         <SolidColorBrush x:Key="AccentBrush" Color="#2563EB" />
-        <SolidColorBrush x:Key="AccentSoftBrush" Color="#EAF1FF" />
-        <SolidColorBrush x:Key="SuccessBrush" Color="#059669" />
-        <SolidColorBrush x:Key="WarningBrush" Color="#B45309" />
+        <SolidColorBrush x:Key="AccentDarkBrush" Color="#1D4ED8" />
+        <SolidColorBrush x:Key="AccentSoftBrush" Color="#EEF5FF" />
+        <SolidColorBrush x:Key="SuccessBrush" Color="#3FB773" />
+        <SolidColorBrush x:Key="SuccessSoftBrush" Color="#EAF8F1" />
+        <SolidColorBrush x:Key="WarningBrush" Color="#F97316" />
+        <SolidColorBrush x:Key="WarningSoftBrush" Color="#FFF2E8" />
         <SolidColorBrush x:Key="DangerBrush" Color="#DC2626" />
+
+        <LinearGradientBrush x:Key="AppIconBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#1D6EF2" Offset="0" />
+            <GradientStop Color="#3B82F6" Offset="0.55" />
+            <GradientStop Color="#175CE6" Offset="1" />
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="BlueIconBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#4F8DFF" Offset="0" />
+            <GradientStop Color="#2368E8" Offset="1" />
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="SkyIconBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#60A5FA" Offset="0" />
+            <GradientStop Color="#2586E8" Offset="1" />
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="GreenIconBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#76D391" Offset="0" />
+            <GradientStop Color="#3AA96F" Offset="1" />
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="OrangeIconBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#FF9F43" Offset="0" />
+            <GradientStop Color="#F36A13" Offset="1" />
+        </LinearGradientBrush>
 
         <Style x:Key="CardBorder" TargetType="Border">
             <Setter Property="Background" Value="{StaticResource PanelBrush}" />
@@ -39,7 +69,7 @@
             <Setter Property="SnapsToDevicePixels" Value="True" />
             <Setter Property="Effect">
                 <Setter.Value>
-                    <DropShadowEffect Color="#101828" BlurRadius="14" ShadowDepth="1" Opacity="0.06" />
+                    <DropShadowEffect Color="#18233A" BlurRadius="22" ShadowDepth="2" Opacity="0.07" />
                 </Setter.Value>
             </Setter>
         </Style>
@@ -74,18 +104,18 @@
                     <Setter Property="Cursor" Value="Arrow" />
                 </Trigger>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#1D4ED8" />
+                    <Setter Property="Background" Value="{StaticResource AccentDarkBrush}" />
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
             <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
-            <Setter Property="Background" Value="#F3F6FB" />
+            <Setter Property="Background" Value="#FFFFFF" />
             <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#E2E8F0" />
+                    <Setter Property="Background" Value="#F3F7FD" />
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -104,12 +134,14 @@
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
         <Style x:Key="HeaderMenuItem" TargetType="MenuItem">
-            <Setter Property="Padding" Value="12,7" />
+            <Setter Property="Padding" Value="14,8" />
             <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
             <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
 
         <Style x:Key="TextBoxStyle" TargetType="TextBox">
@@ -139,6 +171,10 @@
             </Style.Triggers>
         </Style>
 
+        <Style x:Key="SearchTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource TextBoxStyle}">
+            <Setter Property="Padding" Value="38,7,38,7" />
+        </Style>
+
         <Style x:Key="CompactTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource TextBoxStyle}">
             <Setter Property="MinWidth" Value="92" />
             <Setter Property="MinHeight" Value="34" />
@@ -157,26 +193,26 @@
 
         <Style x:Key="MetricLabelText" TargetType="TextBlock">
             <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
-            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontSize" Value="13" />
         </Style>
 
         <Style x:Key="MetricValueText" TargetType="TextBlock">
             <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
             <Setter Property="FontSize" Value="28" />
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Margin" Value="0,5,0,0" />
+            <Setter Property="LineHeight" Value="34" />
         </Style>
 
         <Style x:Key="PanelTitleText" TargetType="TextBlock">
             <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
-            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontSize" Value="17" />
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
 
         <Style x:Key="FieldLabelText" TargetType="TextBlock">
             <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
             <Setter Property="FontSize" Value="12" />
-            <Setter Property="Margin" Value="0,0,0,4" />
+            <Setter Property="Margin" Value="0,0,0,5" />
         </Style>
 
         <Style x:Key="FieldValueText" TargetType="TextBlock">
@@ -190,6 +226,19 @@
             <Setter Property="FontFamily" Value="Cascadia Mono, Consolas" />
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+
+        <Style x:Key="IconGlyph" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
+            <Setter Property="FontSize" Value="17" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="StatusText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
         <Style TargetType="TextBlock">
@@ -247,40 +296,66 @@
         </Style>
     </Window.Resources>
 
-    <Grid Margin="24">
+    <Grid Margin="28,24,28,16" ToolTip="{Binding StatusMessage}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="2.1*" />
-            <RowDefinition Height="1.8*" />
+            <RowDefinition Height="1.55*" />
+            <RowDefinition Height="1.05*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="0,0,0,16">
+        <Grid Grid.Row="0" Margin="0,0,0,18">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <StackPanel>
-                <TextBlock Text="Port Checker" FontSize="30" FontWeight="SemiBold" />
+            <Border Width="50"
+                    Height="50"
+                    CornerRadius="8"
+                    Background="{StaticResource AppIconBrush}"
+                    VerticalAlignment="Center">
+                <TextBlock Text="&#xE8A5;"
+                           Style="{StaticResource IconGlyph}"
+                           Foreground="White"
+                           FontSize="25" />
+            </Border>
+
+            <StackPanel Grid.Column="1" Margin="20,0,20,0" VerticalAlignment="Center">
+                <TextBlock Text="Port Checker"
+                           FontSize="29"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource InkBrush}" />
                 <TextBlock Text="本机 TCP/UDP 端口占用、进程和 svchost 服务明细"
-                           Margin="0,5,0,0"
+                           Margin="0,4,0,0"
+                           FontSize="14"
                            Foreground="{StaticResource MutedBrush}" />
             </StackPanel>
 
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                <Border Background="{StaticResource AccentSoftBrush}"
-                        BorderBrush="#C7D7FE"
+            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                <Border Background="#F8FBFF"
+                        BorderBrush="#CFE0FF"
                         BorderThickness="1"
                         CornerRadius="6"
-                        Padding="10,6"
-                        Margin="0,0,8,0"
+                        Padding="14,9"
+                        Margin="0,0,10,0"
                         ToolTip="{Binding PermissionNotice}">
-                    <TextBlock Text="{Binding ElevationText}" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" />
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE83D;"
+                                   Style="{StaticResource IconGlyph}"
+                                   Foreground="{StaticResource AccentBrush}"
+                                   Margin="0,0,8,0" />
+                        <TextBlock Text="{Binding ElevationText}"
+                                   Foreground="{StaticResource AccentBrush}"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
                 </Border>
-                <Menu Style="{StaticResource HeaderMenu}" Margin="0,0,8,0" VerticalAlignment="Center">
-                    <MenuItem Header="关于" Style="{StaticResource HeaderMenuItem}">
+
+                <Menu Style="{StaticResource HeaderMenu}" Margin="0,0,10,0">
+                    <MenuItem Header="更多" Style="{StaticResource HeaderMenuItem}">
                         <MenuItem Header="关于 Port Checker" Command="{Binding ShowAboutCommand}" />
                         <MenuItem Header="检查更新" Command="{Binding CheckForUpdatesCommand}" />
                         <Separator />
@@ -290,83 +365,156 @@
                         <MenuItem Header="许可证" Command="{Binding ShowLicenseCommand}" />
                     </MenuItem>
                 </Menu>
-                <Button Content="打开任务管理器" Command="{Binding OpenTaskManagerCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" />
-                <Button Content="刷新" Command="{Binding RefreshCommand}" Style="{StaticResource PrimaryButton}" />
+
+                <Button Command="{Binding OpenTaskManagerCommand}"
+                        Style="{StaticResource SecondaryButton}"
+                        Margin="0,0,10,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE9D9;"
+                                   Style="{StaticResource IconGlyph}"
+                                   Foreground="{StaticResource MutedBrush}"
+                                   Margin="0,0,8,0" />
+                        <TextBlock Text="打开任务管理器" />
+                    </StackPanel>
+                </Button>
+
+                <Button Command="{Binding RefreshCommand}" Style="{StaticResource PrimaryButton}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE72C;"
+                                   Style="{StaticResource IconGlyph}"
+                                   Foreground="White"
+                                   Margin="0,0,8,0" />
+                        <TextBlock Text="刷新" />
+                    </StackPanel>
+                </Button>
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Row="1" Margin="0,0,0,16">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-
-            <Border Style="{StaticResource CardBorder}" Margin="0,0,10,0">
+        <UniformGrid Grid.Row="1" Columns="4" Margin="0,0,0,16">
+            <Border Style="{StaticResource CardBorder}" Height="86" Margin="0,0,12,0">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="4" />
-                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="56" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Border Background="{StaticResource AccentBrush}" CornerRadius="2" />
-                    <StackPanel Grid.Column="2">
+                    <Border Width="48"
+                            Height="48"
+                            CornerRadius="8"
+                            Background="{StaticResource BlueIconBrush}"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="&#xECA5;"
+                                   Style="{StaticResource IconGlyph}"
+                                   Foreground="White"
+                                   FontSize="24" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
                         <TextBlock Text="全部端口" Style="{StaticResource MetricLabelText}" />
-                        <TextBlock Text="{Binding TotalCount}" Style="{StaticResource MetricValueText}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                            <TextBlock Text="{Binding TotalCount}" Style="{StaticResource MetricValueText}" />
+                            <TextBlock Text="&#x2191;"
+                                       Foreground="{StaticResource MutedBrush}"
+                                       FontSize="17"
+                                       Margin="8,8,0,0" />
+                        </StackPanel>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <Border Grid.Column="1" Style="{StaticResource CardBorder}" Margin="0,0,10,0">
+            <Border Style="{StaticResource CardBorder}" Height="86" Margin="0,0,12,0">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="4" />
-                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="56" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Border Background="#0EA5E9" CornerRadius="2" />
-                    <StackPanel Grid.Column="2">
-                        <TextBlock Text="TCP" Style="{StaticResource MetricLabelText}" />
-                        <TextBlock Text="{Binding TcpCount}" Style="{StaticResource MetricValueText}" />
+                    <Border Width="48"
+                            Height="48"
+                            CornerRadius="8"
+                            Background="{StaticResource SkyIconBrush}"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="&#xE9D9;"
+                                   Style="{StaticResource IconGlyph}"
+                                   Foreground="White"
+                                   FontSize="23" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="TCP 端口" Style="{StaticResource MetricLabelText}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                            <TextBlock Text="{Binding TcpCount}" Style="{StaticResource MetricValueText}" />
+                            <TextBlock Text="&#x2191;"
+                                       Foreground="{StaticResource MutedBrush}"
+                                       FontSize="17"
+                                       Margin="8,8,0,0" />
+                        </StackPanel>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <Border Grid.Column="2" Style="{StaticResource CardBorder}" Margin="0,0,10,0">
+            <Border Style="{StaticResource CardBorder}" Height="86" Margin="0,0,12,0">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="4" />
-                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="56" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Border Background="{StaticResource SuccessBrush}" CornerRadius="2" />
-                    <StackPanel Grid.Column="2">
-                        <TextBlock Text="UDP" Style="{StaticResource MetricLabelText}" />
-                        <TextBlock Text="{Binding UdpCount}" Style="{StaticResource MetricValueText}" />
+                    <Border Width="48"
+                            Height="48"
+                            CornerRadius="8"
+                            Background="{StaticResource GreenIconBrush}"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="&#xE968;"
+                                   Style="{StaticResource IconGlyph}"
+                                   Foreground="White"
+                                   FontSize="23" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="UDP 端口" Style="{StaticResource MetricLabelText}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                            <TextBlock Text="{Binding UdpCount}" Style="{StaticResource MetricValueText}" />
+                            <TextBlock Text="&#x2191;"
+                                       Foreground="{StaticResource MutedBrush}"
+                                       FontSize="17"
+                                       Margin="8,8,0,0" />
+                        </StackPanel>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <Border Grid.Column="3" Style="{StaticResource CardBorder}">
+            <Border Style="{StaticResource CardBorder}" Height="86">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="4" />
-                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="56" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Border Background="{StaticResource WarningBrush}" CornerRadius="2" />
-                    <StackPanel Grid.Column="2">
+                    <Border Width="48"
+                            Height="48"
+                            CornerRadius="8"
+                            Background="{StaticResource OrangeIconBrush}"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="&#xE713;"
+                                   Style="{StaticResource IconGlyph}"
+                                   Foreground="White"
+                                   FontSize="23" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
                         <TextBlock Text="svchost 端口" Style="{StaticResource MetricLabelText}" />
-                        <TextBlock Text="{Binding SvchostCount}" Style="{StaticResource MetricValueText}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                            <TextBlock Text="{Binding SvchostCount}" Style="{StaticResource MetricValueText}" />
+                            <TextBlock Text="&#x2191;"
+                                       Foreground="{StaticResource MutedBrush}"
+                                       FontSize="17"
+                                       Margin="8,8,0,0" />
+                        </StackPanel>
                     </StackPanel>
                 </Grid>
             </Border>
-        </Grid>
+        </UniformGrid>
 
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2.2*" />
+                <ColumnDefinition Width="2.25*" />
                 <ColumnDefinition Width="16" />
                 <ColumnDefinition Width="1*" />
             </Grid.ColumnDefinitions>
@@ -378,9 +526,10 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <Grid Margin="18,16,18,12">
+                    <Grid Margin="18,14,18,12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
@@ -388,42 +537,60 @@
 
                         <Grid>
                             <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                                     Style="{StaticResource TextBoxStyle}"
-                                     MinWidth="260" />
+                                     Style="{StaticResource SearchTextBoxStyle}"
+                                     MinWidth="330" />
+                            <TextBlock Text="&#xE721;"
+                                       Style="{StaticResource IconGlyph}"
+                                       Foreground="{StaticResource MutedBrush}"
+                                       HorizontalAlignment="Left"
+                                       Margin="13,0,0,0"
+                                       IsHitTestVisible="False" />
                             <TextBlock Text="搜索端口、PID、进程、服务或路径"
-                                       Foreground="#98A2B3"
-                                       Margin="13,0,42,0"
+                                       Foreground="#8D98AA"
+                                       Margin="38,0,42,0"
                                        VerticalAlignment="Center"
                                        IsHitTestVisible="False"
                                        Visibility="{Binding SearchText, Converter={StaticResource EmptyStringToVisibilityConverter}}" />
-                            <Button Content="X"
-                                    Width="28"
+                            <Button Width="28"
                                     Height="28"
                                     HorizontalAlignment="Right"
-                                    Margin="0,0,4,0"
+                                    Margin="0,0,5,0"
                                     Padding="0"
                                     Command="{Binding ClearSearchCommand}"
                                     Style="{StaticResource SecondaryButton}"
-                                    Visibility="{Binding SearchText, Converter={StaticResource StringToVisibilityConverter}}" />
+                                    Visibility="{Binding SearchText, Converter={StaticResource StringToVisibilityConverter}}">
+                                <TextBlock Text="&#xE711;"
+                                           Style="{StaticResource IconGlyph}"
+                                           FontSize="12"
+                                           Foreground="{StaticResource MutedBrush}" />
+                            </Button>
                         </Grid>
 
                         <ComboBox Grid.Column="1"
                                   ItemsSource="{Binding ProtocolFilters}"
                                   SelectedItem="{Binding ProtocolFilter}"
                                   Style="{StaticResource ComboBoxStyle}"
+                                  MinWidth="126"
                                   Margin="10,0,0,0" />
 
                         <ComboBox Grid.Column="2"
                                   ItemsSource="{Binding StateFilters}"
                                   SelectedItem="{Binding StateFilter}"
                                   Style="{StaticResource ComboBoxStyle}"
+                                  MinWidth="136"
                                   Margin="10,0,0,0" />
 
                         <TextBlock Grid.Column="3"
-                                   Text="{Binding FilteredCount, StringFormat=显示 {0} 条}"
+                                   Text="{Binding FilteredCount, StringFormat=共 {0} 条}"
                                    Foreground="{StaticResource MutedBrush}"
                                    VerticalAlignment="Center"
-                                   Margin="14,0,0,0" />
+                                   Margin="18,0,0,0" />
+
+                        <TextBlock Grid.Column="4"
+                                   Text="&#xE71C;"
+                                   Style="{StaticResource IconGlyph}"
+                                   Foreground="{StaticResource MutedBrush}"
+                                   Margin="16,0,2,0" />
                     </Grid>
 
                     <DataGrid Grid.Row="1"
@@ -434,7 +601,10 @@
                             <DataGridTemplateColumn Header="协议" Width="72">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Border Background="#EEF6FF" CornerRadius="4" Padding="7,3" HorizontalAlignment="Left">
+                                        <Border Background="#EAF2FF"
+                                                CornerRadius="4"
+                                                Padding="7,3"
+                                                HorizontalAlignment="Left">
                                             <TextBlock Text="{Binding ProtocolText}"
                                                        Foreground="{StaticResource AccentBrush}"
                                                        FontWeight="SemiBold"
@@ -443,7 +613,7 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="本地地址" Width="176">
+                            <DataGridTemplateColumn Header="本地地址" Width="188">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding LocalEndpoint}" Style="{StaticResource MonoTableText}" />
@@ -457,16 +627,16 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTextColumn Header="状态" Binding="{Binding State}" Width="120" />
-                            <DataGridTemplateColumn Header="PID" Width="80">
+                            <DataGridTextColumn Header="状态" Binding="{Binding State}" Width="110" />
+                            <DataGridTemplateColumn Header="PID" Width="78">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding ProcessId}" Style="{StaticResource MonoTableText}" />
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTextColumn Header="进程" Binding="{Binding ProcessName}" Width="130" />
-                            <DataGridTextColumn Header="服务" Binding="{Binding ServiceSummary}" Width="*" MinWidth="180" />
+                            <DataGridTextColumn Header="进程" Binding="{Binding ProcessName}" Width="138" />
+                            <DataGridTextColumn Header="服务" Binding="{Binding ServiceSummary}" Width="*" MinWidth="170" />
                         </DataGrid.Columns>
                     </DataGrid>
 
@@ -496,70 +666,107 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <StackPanel Margin="18,16,18,14">
-                        <TextBlock Text="进程详情" Style="{StaticResource PanelTitleText}" />
-                        <TextBlock Text="{Binding SelectedPort.ProcessName}" FontSize="24" FontWeight="SemiBold" Margin="0,9,0,0" />
-                        <TextBlock Text="{Binding SelectedPort.ProcessId, StringFormat=PID {0}}"
-                                   Foreground="{StaticResource MutedBrush}"
-                                   Margin="0,2,0,0" />
-                    </StackPanel>
-
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="18,0,18,12">
+                    <Grid Margin="18,16,18,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Text="端点" Style="{StaticResource FieldLabelText}" />
-                            <TextBlock Text="{Binding SelectedPort.LocalEndpoint}" Style="{StaticResource FieldValueText}" FontFamily="Cascadia Mono, Consolas" />
+                            <TextBlock Text="进程详情" Style="{StaticResource PanelTitleText}" />
+                            <TextBlock Text="{Binding SelectedPort.ProcessName, TargetNullValue=未选择进程}"
+                                       FontSize="21"
+                                       FontWeight="SemiBold"
+                                       Margin="0,12,0,0" />
+                            <TextBlock Text="{Binding SelectedPort.ProcessId, StringFormat=PID {0}, TargetNullValue=PID --}"
+                                       Foreground="{StaticResource MutedBrush}"
+                                       Margin="0,3,0,0" />
+                        </StackPanel>
+                        <Border Grid.Column="1"
+                                Background="#EAF2FF"
+                                CornerRadius="4"
+                                Padding="10,5"
+                                VerticalAlignment="Top">
+                            <TextBlock Text="{Binding SelectedPort.ProtocolText, TargetNullValue=--}"
+                                       Foreground="{StaticResource AccentBrush}"
+                                       FontWeight="SemiBold" />
+                        </Border>
+                    </Grid>
 
-                            <TextBlock Text="远程" Style="{StaticResource FieldLabelText}" />
-                            <TextBlock Text="{Binding SelectedPort.RemoteEndpoint}" Style="{StaticResource FieldValueText}" FontFamily="Cascadia Mono, Consolas" />
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="18,0,18,10">
+                        <StackPanel>
+                            <TextBlock Text="端点（本地地址）" Style="{StaticResource FieldLabelText}" />
+                            <TextBlock Text="{Binding SelectedPort.LocalEndpoint, TargetNullValue=--}"
+                                       Style="{StaticResource FieldValueText}"
+                                       FontFamily="Cascadia Mono, Consolas" />
+
+                            <TextBlock Text="远程地址" Style="{StaticResource FieldLabelText}" />
+                            <TextBlock Text="{Binding SelectedPort.RemoteEndpoint, TargetNullValue=--}"
+                                       Style="{StaticResource FieldValueText}"
+                                       FontFamily="Cascadia Mono, Consolas" />
+
+                            <TextBlock Text="服务" Style="{StaticResource FieldLabelText}" />
+                            <TextBlock Text="{Binding SelectedPort.ServiceSummary, TargetNullValue=--}" Style="{StaticResource FieldValueText}" />
 
                             <TextBlock Text="用户" Style="{StaticResource FieldLabelText}" />
                             <TextBlock Text="{Binding SelectedPort.UserName, TargetNullValue=无用户信息}" Style="{StaticResource FieldValueText}" />
 
                             <TextBlock Text="路径" Style="{StaticResource FieldLabelText}" />
-                            <TextBlock Text="{Binding SelectedPort.PathSummary}"
+                            <TextBlock Text="{Binding SelectedPort.PathSummary, TargetNullValue=无路径或权限不足}"
                                        Style="{StaticResource FieldValueText}" />
 
                             <TextBlock Text="命令行" Style="{StaticResource FieldLabelText}" />
-                            <TextBlock Text="{Binding SelectedPort.CommandSummary}"
+                            <TextBlock Text="{Binding SelectedPort.CommandSummary, TargetNullValue=无命令行或权限不足}"
                                        TextWrapping="Wrap"
                                        Foreground="{StaticResource InkBrush}"
-                                       Margin="0,0,0,16" />
+                                       Margin="0,0,0,14" />
 
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="svchost 服务" Style="{StaticResource PanelTitleText}" />
-                                <TextBlock Grid.Column="1"
-                                           Text="{Binding SelectedServicesCount}"
-                                           Foreground="{StaticResource MutedBrush}"
-                                           VerticalAlignment="Center" />
-                            </Grid>
-
-                            <Border Background="#FFF8ED"
+                            <Border Background="{StaticResource WarningSoftBrush}"
                                     BorderBrush="#FED7AA"
                                     BorderThickness="1"
                                     CornerRadius="8"
-                                    Padding="10"
-                                    Margin="0,0,0,8"
+                                    Padding="12"
+                                    Margin="0,0,0,10"
                                     Visibility="{Binding KillProcessWarningText, Converter={StaticResource StringToVisibilityConverter}}">
-                                <TextBlock Text="{Binding ServiceOperationRiskText}"
-                                           Foreground="#9A3412"
-                                           TextWrapping="Wrap" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="&#xE946;"
+                                               Style="{StaticResource IconGlyph}"
+                                               Foreground="{StaticResource WarningBrush}"
+                                               Margin="0,0,8,0"
+                                               VerticalAlignment="Top" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding ServiceOperationRiskText}"
+                                               Foreground="#9A3412"
+                                               TextWrapping="Wrap" />
+                                </Grid>
                             </Border>
 
                             <Border Background="#EEF6FF"
                                     BorderBrush="#BFDBFE"
                                     BorderThickness="1"
                                     CornerRadius="8"
-                                    Padding="10"
-                                    Margin="0,0,0,8"
+                                    Padding="12"
+                                    Margin="0,0,0,10"
                                     Visibility="{Binding ServiceOperationResult, Converter={StaticResource StringToVisibilityConverter}}">
                                 <TextBlock Text="{Binding ServiceOperationResult}"
                                            Foreground="#1E40AF"
                                            TextWrapping="Wrap" />
                             </Border>
+
+                            <Grid Margin="0,2,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="svchost 服务" Style="{StaticResource PanelTitleText}" />
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding SelectedServicesCount, StringFormat={}{0} 个}"
+                                           Foreground="{StaticResource MutedBrush}"
+                                           VerticalAlignment="Center" />
+                            </Grid>
 
                             <ItemsControl ItemsSource="{Binding SelectedPort.Services}">
                                 <ItemsControl.ItemTemplate>
@@ -599,92 +806,92 @@
                         </StackPanel>
                     </ScrollViewer>
 
-                    <StackPanel Grid.Row="2" Margin="18">
+                    <StackPanel Grid.Row="2" Margin="18,10,18,14">
                         <TextBlock Text="{Binding KillProcessWarningText}"
                                    Foreground="{StaticResource DangerBrush}"
                                    TextWrapping="Wrap"
                                    Margin="0,0,0,10"
                                    Visibility="{Binding KillProcessWarningText, Converter={StaticResource StringToVisibilityConverter}}" />
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button Content="定位文件" Command="{Binding OpenLocationCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" />
-                            <Button Content="结束进程"
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Button Command="{Binding OpenLocationCommand}"
+                                    Style="{StaticResource SecondaryButton}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE8B7;"
+                                               Style="{StaticResource IconGlyph}"
+                                               Foreground="{StaticResource MutedBrush}"
+                                               Margin="0,0,8,0" />
+                                    <TextBlock Text="定位文件" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button Grid.Column="2"
                                     Command="{Binding KillProcessCommand}"
                                     Style="{StaticResource DangerButton}"
-                                    Visibility="{Binding CanKillSelectedProcess, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                            <Button Content="按服务操作"
+                                    Visibility="{Binding CanKillSelectedProcess, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE74D;"
+                                               Style="{StaticResource IconGlyph}"
+                                               Foreground="White"
+                                               Margin="0,0,8,0" />
+                                    <TextBlock Text="结束进程" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button Grid.Column="2"
                                     Style="{StaticResource SecondaryButton}"
                                     IsEnabled="False"
-                                    Visibility="{Binding KillProcessWarningText, Converter={StaticResource StringToVisibilityConverter}}" />
-                        </StackPanel>
+                                    Visibility="{Binding KillProcessWarningText, Converter={StaticResource StringToVisibilityConverter}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE713;"
+                                               Style="{StaticResource IconGlyph}"
+                                               Foreground="{StaticResource MutedBrush}"
+                                               Margin="0,0,8,0" />
+                                    <TextBlock Text="按服务操作" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
                     </StackPanel>
                 </Grid>
             </Border>
         </Grid>
 
-        <Border Grid.Row="3" Style="{StaticResource CardBorder}" Padding="0" Margin="0,16,0,0">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="2.2*" />
-                    <ColumnDefinition Width="16" />
-                    <ColumnDefinition Width="1*" />
-                </Grid.ColumnDefinitions>
+        <Grid Grid.Row="3" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.05*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="1.2*" />
+            </Grid.ColumnDefinitions>
 
-                <Grid Grid.ColumnSpan="3" Margin="18,14,18,10">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+            <Border Style="{StaticResource CardBorder}" Padding="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
 
-                    <StackPanel>
+                    <StackPanel Margin="18,13,18,8">
                         <TextBlock Text="Windows 保留端口" Style="{StaticResource PanelTitleText}" />
                         <TextBlock Text="{Binding ReservedPortStatusMessage}"
                                    Foreground="{StaticResource MutedBrush}"
                                    Margin="0,3,0,0" />
                     </StackPanel>
 
-                    <ComboBox Grid.Column="1"
-                              ItemsSource="{Binding ReservedPortListStores}"
-                              SelectedItem="{Binding ReservedPortListStore}"
-                              Style="{StaticResource ComboBoxStyle}"
-                              MinWidth="112"
-                              Margin="10,0,0,0" />
-
-                    <TextBlock Grid.Column="2"
-                               Text="{Binding ReservedPortRangeCount, StringFormat=共 {0} 条}"
-                               Foreground="{StaticResource MutedBrush}"
-                               VerticalAlignment="Center"
-                               Margin="14,0,0,0" />
-
-                    <Button Grid.Column="3"
-                            Content="刷新保留端口"
-                            Command="{Binding RefreshReservedPortsCommand}"
-                            Style="{StaticResource SecondaryButton}"
-                            Margin="10,0,0,0" />
-                </Grid>
-
-                <Grid Grid.Row="1" Margin="0,0,0,1">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="2.2*" />
-                        <ColumnDefinition Width="16" />
-                        <ColumnDefinition Width="1*" />
-                    </Grid.ColumnDefinitions>
-
-                    <Grid>
+                    <Grid Grid.Row="1">
                         <DataGrid ItemsSource="{Binding ReservedPortRanges}"
                                   SelectedItem="{Binding SelectedReservedPortRange, Mode=TwoWay}"
-                                  Margin="1,0,0,0">
+                                  Margin="1,0,1,1">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="协议" Binding="{Binding ProtocolText}" Width="80" />
-                                <DataGridTextColumn Header="范围" Binding="{Binding RangeText}" Width="140" />
-                                <DataGridTextColumn Header="端口数" Binding="{Binding PortCount}" Width="90" />
-                                <DataGridTextColumn Header="存储" Binding="{Binding StoreText}" Width="90" />
-                                <DataGridTextColumn Header="来源" Binding="{Binding SourceText}" Width="*" MinWidth="120" />
+                                <DataGridTextColumn Header="范围" Binding="{Binding RangeText}" Width="150" />
+                                <DataGridTextColumn Header="端口数" Binding="{Binding PortCount}" Width="92" />
+                                <DataGridTextColumn Header="存储" Binding="{Binding StoreText}" Width="96" />
+                                <DataGridTextColumn Header="来源" Binding="{Binding SourceText}" Width="*" MinWidth="110" />
                             </DataGrid.Columns>
                         </DataGrid>
 
@@ -703,92 +910,183 @@
                                        TextWrapping="Wrap" />
                         </Border>
                     </Grid>
-
-                    <Border Grid.Column="2"
-                            BorderBrush="{StaticResource LineBrush}"
-                            BorderThickness="1,0,0,0"
-                            Padding="18,0,18,0">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-
-                            <TextBlock Text="添加保留范围" Style="{StaticResource PanelTitleText}" />
-
-                            <Grid Grid.Row="1" Margin="0,10,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="1*" />
-                                    <ColumnDefinition Width="8" />
-                                    <ColumnDefinition Width="1*" />
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-
-                                <TextBlock Text="协议" Style="{StaticResource FieldLabelText}" />
-                                <ComboBox Grid.Row="1"
-                                          ItemsSource="{Binding ReservedPortProtocols}"
-                                          SelectedItem="{Binding ReservedPortProtocol}"
-                                          Style="{StaticResource ComboBoxStyle}"
-                                          MinWidth="0" />
-
-                                <TextBlock Grid.Column="2" Text="存储" Style="{StaticResource FieldLabelText}" />
-                                <ComboBox Grid.Row="1"
-                                          Grid.Column="2"
-                                          ItemsSource="{Binding ReservedPortListStores}"
-                                          SelectedItem="{Binding ReservedPortStore}"
-                                          Style="{StaticResource ComboBoxStyle}"
-                                          MinWidth="0" />
-
-                                <TextBlock Grid.Row="2" Text="起始端口" Style="{StaticResource FieldLabelText}" Margin="0,10,0,4" />
-                                <TextBox Grid.Row="3"
-                                         Text="{Binding ReservedPortStart, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource CompactTextBoxStyle}" />
-
-                                <TextBlock Grid.Row="2" Grid.Column="2" Text="端口数量" Style="{StaticResource FieldLabelText}" Margin="0,10,0,4" />
-                                <TextBox Grid.Row="3"
-                                         Grid.Column="2"
-                                         Text="{Binding ReservedPortCount, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource CompactTextBoxStyle}" />
-                            </Grid>
-
-                            <StackPanel Grid.Row="2">
-                                <TextBlock Text="{Binding SelectedReservedPortRangeSummary}"
-                                           Foreground="{StaticResource MutedBrush}"
-                                           TextWrapping="Wrap"
-                                           Margin="0,0,0,8" />
-                                <TextBlock Text="{Binding AdministeredReservedPortRangeCount, StringFormat=用户保留 {0} 条}"
-                                           Foreground="{StaticResource MutedBrush}" />
-                            </StackPanel>
-
-                            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button Content="添加"
-                                        Command="{Binding AddReservedPortRangeCommand}"
-                                        Style="{StaticResource PrimaryButton}"
-                                        Margin="0,0,8,0" />
-                                <Button Content="删除选中"
-                                        Command="{Binding DeleteReservedPortRangeCommand}"
-                                        Style="{StaticResource DangerButton}" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
                 </Grid>
-            </Grid>
-        </Border>
+            </Border>
 
-        <Grid Grid.Row="4" Margin="0,14,0,0">
+            <Border Grid.Column="2" Style="{StaticResource CardBorder}" Padding="0">
+                <Grid Margin="18,13,18,14">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Text="添加保留范围"
+                                   Style="{StaticResource PanelTitleText}"
+                                   VerticalAlignment="Center" />
+
+                        <ComboBox Grid.Column="1"
+                                  ItemsSource="{Binding ReservedPortListStores}"
+                                  SelectedItem="{Binding ReservedPortListStore}"
+                                  Style="{StaticResource ComboBoxStyle}"
+                                  MinWidth="110"
+                                  Margin="10,0,0,0" />
+
+                        <TextBlock Grid.Column="2"
+                                   Text="{Binding ReservedPortRangeCount, StringFormat=共 {0} 条}"
+                                   Foreground="{StaticResource MutedBrush}"
+                                   VerticalAlignment="Center"
+                                   Margin="14,0,0,0" />
+
+                        <Button Grid.Column="3"
+                                Command="{Binding RefreshReservedPortsCommand}"
+                                Style="{StaticResource SecondaryButton}"
+                                Margin="12,0,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE72C;"
+                                           Style="{StaticResource IconGlyph}"
+                                           Foreground="{StaticResource MutedBrush}"
+                                           Margin="0,0,7,0" />
+                                <TextBlock Text="刷新保留端口" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <Grid Grid.Row="1" Margin="0,12,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*" />
+                            <ColumnDefinition Width="18" />
+                            <ColumnDefinition Width="1*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Text="协议" Style="{StaticResource FieldLabelText}" />
+                        <ComboBox Grid.Row="1"
+                                  ItemsSource="{Binding ReservedPortProtocols}"
+                                  SelectedItem="{Binding ReservedPortProtocol}"
+                                  Style="{StaticResource ComboBoxStyle}"
+                                  MinWidth="0" />
+
+                        <TextBlock Grid.Column="2" Text="存储" Style="{StaticResource FieldLabelText}" />
+                        <ComboBox Grid.Row="1"
+                                  Grid.Column="2"
+                                  ItemsSource="{Binding ReservedPortListStores}"
+                                  SelectedItem="{Binding ReservedPortStore}"
+                                  Style="{StaticResource ComboBoxStyle}"
+                                  MinWidth="0" />
+
+                        <TextBlock Grid.Row="2" Text="起始端口" Style="{StaticResource FieldLabelText}" Margin="0,12,0,5" />
+                        <Grid Grid.Row="3">
+                            <TextBox Text="{Binding ReservedPortStart, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource CompactTextBoxStyle}" />
+                            <TextBlock Text="例如 5000"
+                                       Foreground="{StaticResource SubtleBrush}"
+                                       Margin="12,0,0,0"
+                                       VerticalAlignment="Center"
+                                       IsHitTestVisible="False"
+                                       Visibility="{Binding ReservedPortStart, Converter={StaticResource EmptyStringToVisibilityConverter}}" />
+                        </Grid>
+
+                        <TextBlock Grid.Row="2" Grid.Column="2" Text="端口数量" Style="{StaticResource FieldLabelText}" Margin="0,12,0,5" />
+                        <Grid Grid.Row="3" Grid.Column="2">
+                            <TextBox Text="{Binding ReservedPortCount, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource CompactTextBoxStyle}" />
+                            <TextBlock Text="例如 50"
+                                       Foreground="{StaticResource SubtleBrush}"
+                                       Margin="12,0,0,0"
+                                       VerticalAlignment="Center"
+                                       IsHitTestVisible="False"
+                                       Visibility="{Binding ReservedPortCount, Converter={StaticResource EmptyStringToVisibilityConverter}}" />
+                        </Grid>
+                    </Grid>
+
+                    <StackPanel Grid.Row="2" Margin="0,0,0,8">
+                        <TextBlock Text="{Binding SelectedReservedPortRangeSummary}"
+                                   Foreground="{StaticResource MutedBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,8" />
+                        <TextBlock Text="{Binding AdministeredReservedPortRangeCount, StringFormat=用户保留 {0} 条}"
+                                   Foreground="{StaticResource MutedBrush}" />
+                    </StackPanel>
+
+                    <Grid Grid.Row="3" HorizontalAlignment="Left">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="164" />
+                            <ColumnDefinition Width="18" />
+                            <ColumnDefinition Width="164" />
+                        </Grid.ColumnDefinitions>
+
+                        <Button Command="{Binding AddReservedPortRangeCommand}"
+                                Style="{StaticResource PrimaryButton}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE710;"
+                                           Style="{StaticResource IconGlyph}"
+                                           Foreground="White"
+                                           Margin="0,0,8,0" />
+                                <TextBlock Text="添加范围" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Grid.Column="2"
+                                Command="{Binding DeleteReservedPortRangeCommand}"
+                                Style="{StaticResource SecondaryButton}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE74D;"
+                                           Style="{StaticResource IconGlyph}"
+                                           Foreground="{StaticResource MutedBrush}"
+                                           Margin="0,0,8,0" />
+                                <TextBlock Text="删除选中" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Grid Grid.Row="4" Margin="0,13,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource MutedBrush}" />
-            <TextBlock Grid.Column="1" Text="{Binding LastScannedText}" Foreground="{StaticResource MutedBrush}" />
+
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE73E;"
+                           Style="{StaticResource IconGlyph}"
+                           Foreground="{StaticResource SuccessBrush}"
+                           Margin="0,0,7,0" />
+                <TextBlock Text="{Binding ScanStateText}" Style="{StaticResource StatusText}" FontWeight="SemiBold" />
+                <Border Width="1" Background="{StaticResource LineBrush}" Margin="16,2" />
+                <TextBlock Text="{Binding PortCountStatusText}" Style="{StaticResource StatusText}" />
+                <Border Width="1" Background="{StaticResource LineBrush}" Margin="16,2" />
+                <TextBlock Text="{Binding ScanTotalDurationText}" Style="{StaticResource StatusText}" />
+                <Border Width="1" Background="{StaticResource LineBrush}" Margin="16,2" />
+                <TextBlock Text="{Binding ScanPortDurationText}" Style="{StaticResource StatusText}" />
+                <Border Width="1" Background="{StaticResource LineBrush}" Margin="16,2" />
+                <TextBlock Text="{Binding ScanMetadataDurationText}" Style="{StaticResource StatusText}" />
+                <Border Width="1" Background="{StaticResource LineBrush}" Margin="16,2" />
+                <TextBlock Text="{Binding ScanProcessCountText}" Style="{StaticResource StatusText}" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <TextBlock Text="{Binding ElevationText}"
+                           Style="{StaticResource StatusText}"
+                           Margin="0,0,18,0" />
+                <TextBlock Text="{Binding LastScannedText}" Style="{StaticResource StatusText}" />
+            </StackPanel>
         </Grid>
     </Grid>
 </Window>

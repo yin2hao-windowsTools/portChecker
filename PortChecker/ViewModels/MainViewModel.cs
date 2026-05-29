@@ -41,6 +41,12 @@ internal sealed class MainViewModel : ObservableObject
     private string _emptyReservedPortMessage = string.Empty;
     private bool _isRefreshing;
     private string _statusMessage = "准备扫描端口";
+    private string _scanStateText = "等待扫描";
+    private string _portCountStatusText = "端口占用 --";
+    private string _scanTotalDurationText = "总耗时 --";
+    private string _scanPortDurationText = "端口扫描 --";
+    private string _scanMetadataDurationText = "元数据 --";
+    private string _scanProcessCountText = "进程 --";
     private string _permissionNotice = "普通权限：端口和 PID 可正常查看；部分系统进程详情可能受限，高风险操作会按需请求管理员权限。";
     private string _serviceOperationResult = string.Empty;
     private string _emptyPortListMessage = string.Empty;
@@ -309,6 +315,42 @@ internal sealed class MainViewModel : ObservableObject
         private set => SetProperty(ref _statusMessage, value);
     }
 
+    public string ScanStateText
+    {
+        get => _scanStateText;
+        private set => SetProperty(ref _scanStateText, value);
+    }
+
+    public string PortCountStatusText
+    {
+        get => _portCountStatusText;
+        private set => SetProperty(ref _portCountStatusText, value);
+    }
+
+    public string ScanTotalDurationText
+    {
+        get => _scanTotalDurationText;
+        private set => SetProperty(ref _scanTotalDurationText, value);
+    }
+
+    public string ScanPortDurationText
+    {
+        get => _scanPortDurationText;
+        private set => SetProperty(ref _scanPortDurationText, value);
+    }
+
+    public string ScanMetadataDurationText
+    {
+        get => _scanMetadataDurationText;
+        private set => SetProperty(ref _scanMetadataDurationText, value);
+    }
+
+    public string ScanProcessCountText
+    {
+        get => _scanProcessCountText;
+        private set => SetProperty(ref _scanProcessCountText, value);
+    }
+
     public string ReservedPortStatusMessage
     {
         get => _reservedPortStatusMessage;
@@ -408,7 +450,7 @@ internal sealed class MainViewModel : ObservableObject
 
     public string LastScannedText => LastScannedAt is null ? "尚未扫描" : LastScannedAt.Value.ToString("yyyy-MM-dd HH:mm:ss");
 
-    public string ElevationText => IsElevated ? "管理员权限" : "普通权限 - 按需提权";
+    public string ElevationText => IsElevated ? "管理员权限" : "普通权限 · 按需提权";
 
     public async Task InitializeAsync()
     {
@@ -426,6 +468,12 @@ internal sealed class MainViewModel : ObservableObject
 
         IsRefreshing = true;
         StatusMessage = "正在扫描端口和进程信息...";
+        ScanStateText = "正在扫描";
+        PortCountStatusText = "端口占用 --";
+        ScanTotalDurationText = "总耗时 --";
+        ScanPortDurationText = "端口扫描 --";
+        ScanMetadataDurationText = "元数据 --";
+        ScanProcessCountText = "进程 --";
         EmptyPortListMessage = string.Empty;
 
         try
@@ -447,6 +495,7 @@ internal sealed class MainViewModel : ObservableObject
             PermissionNotice = result.PermissionNotice ?? PermissionNotice;
             SelectVisiblePort(FindMatchingPort(previousSelectedPort));
             RaiseCountProperties();
+            UpdateScanStatusDetails(result);
 
             StatusMessage = BuildScanStatusMessage(result);
         }
@@ -1085,6 +1134,17 @@ internal sealed class MainViewModel : ObservableObject
         }
 
         return $"{countText}（总耗时 {metrics.TotalDuration.TotalMilliseconds:F0}ms，端口扫描 {metrics.PortSnapshotDuration.TotalMilliseconds:F0}ms，元数据 {metrics.MetadataDuration.TotalMilliseconds:F0}ms，进程 {metrics.DistinctProcessCount}）。{PermissionNotice}";
+    }
+
+    private void UpdateScanStatusDetails(PortScanResult result)
+    {
+        var metrics = result.Metrics;
+        ScanStateText = result.Warning is null ? "扫描完成" : "扫描完成，存在提示";
+        PortCountStatusText = $"端口占用 {_ports.Count} 个";
+        ScanTotalDurationText = $"总耗时 {metrics.TotalDuration.TotalMilliseconds:F0}ms";
+        ScanPortDurationText = $"端口扫描 {metrics.PortSnapshotDuration.TotalMilliseconds:F0}ms";
+        ScanMetadataDurationText = $"元数据 {metrics.MetadataDuration.TotalMilliseconds:F0}ms";
+        ScanProcessCountText = $"进程 {metrics.DistinctProcessCount} 个";
     }
 
     private void SearchDebounceTimerTick(object? sender, EventArgs e)
