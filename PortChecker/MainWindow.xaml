@@ -78,8 +78,8 @@
         </LinearGradientBrush>
 
         <Style x:Key="CardBorder" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
+            <Setter Property="Background" Value="{DynamicResource PanelBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Padding" Value="16" />
@@ -94,10 +94,10 @@
         <Style x:Key="PrimaryButton" TargetType="Button">
             <Setter Property="MinHeight" Value="36" />
             <Setter Property="Padding" Value="16,7" />
-            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
@@ -121,28 +121,28 @@
                     <Setter Property="Cursor" Value="Arrow" />
                 </Trigger>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{StaticResource AccentDarkBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource AccentDarkBrush}" />
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
-            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
-            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+            <Setter Property="Background" Value="{DynamicResource PanelBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{StaticResource SecondaryButtonHoverBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource SecondaryButtonHoverBrush}" />
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
-            <Setter Property="Background" Value="{StaticResource DangerBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
+            <Setter Property="Background" Value="{DynamicResource DangerBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}" />
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{StaticResource DangerHoverBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource DangerHoverBrush}" />
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -156,40 +156,40 @@
 
         <Style x:Key="HeaderMenuItem" TargetType="MenuItem">
             <Setter Property="Padding" Value="14,8" />
-            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
 
         <Style TargetType="ComboBoxItem">
-            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
-            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+            <Setter Property="Background" Value="{DynamicResource PanelBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
             <Setter Property="Padding" Value="10,6" />
             <Style.Triggers>
                 <Trigger Property="IsHighlighted" Value="True">
-                    <Setter Property="Background" Value="{StaticResource HoverBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
                 </Trigger>
                 <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="{StaticResource SelectedBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource SelectedBrush}" />
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <Style TargetType="MenuItem">
-            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
-            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
+            <Setter Property="Background" Value="{DynamicResource PanelBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
         </Style>
 
         <Style x:Key="TextBoxStyle" TargetType="TextBox">
             <Setter Property="MinHeight" Value="36" />
             <Setter Property="Padding" Value="12,7" />
-            <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Background" Value="{StaticResource ControlBrush}" />
-            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+            <Setter Property="Background" Value="{DynamicResource ControlBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
-            <Setter Property="CaretBrush" Value="{StaticResource AccentBrush}" />
+            <Setter Property="CaretBrush" Value="{DynamicResource AccentBrush}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
@@ -204,7 +204,7 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsKeyboardFocusWithin" Value="True">
-                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -223,39 +223,39 @@
             <Setter Property="MinHeight" Value="36" />
             <Setter Property="MinWidth" Value="120" />
             <Setter Property="Padding" Value="10,6" />
-            <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Background" Value="{StaticResource ControlBrush}" />
-            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+            <Setter Property="Background" Value="{DynamicResource ControlBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
 
         <Style x:Key="MetricLabelText" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
             <Setter Property="FontSize" Value="13" />
         </Style>
 
         <Style x:Key="MetricValueText" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
             <Setter Property="FontSize" Value="28" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="LineHeight" Value="34" />
         </Style>
 
         <Style x:Key="PanelTitleText" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
             <Setter Property="FontSize" Value="17" />
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
 
         <Style x:Key="FieldLabelText" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
             <Setter Property="FontSize" Value="12" />
             <Setter Property="Margin" Value="0,0,0,5" />
         </Style>
 
         <Style x:Key="FieldValueText" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="TextWrapping" Value="Wrap" />
             <Setter Property="Margin" Value="0,0,0,14" />
@@ -275,13 +275,13 @@
         </Style>
 
         <Style x:Key="StatusText" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
             <Setter Property="FontSize" Value="12" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
         <Style TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
         </Style>
 
@@ -291,30 +291,30 @@
             <Setter Property="CanUserDeleteRows" Value="False" />
             <Setter Property="GridLinesVisibility" Value="None" />
             <Setter Property="HeadersVisibility" Value="Column" />
-            <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource LineBrush}" />
+            <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource LineBrush}" />
             <Setter Property="VerticalGridLinesBrush" Value="Transparent" />
             <Setter Property="RowHeight" Value="40" />
             <Setter Property="ColumnHeaderHeight" Value="40" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
-            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
-            <Setter Property="AlternatingRowBackground" Value="{StaticResource DataGridAltRowBrush}" />
+            <Setter Property="Background" Value="{DynamicResource PanelBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+            <Setter Property="AlternatingRowBackground" Value="{DynamicResource DataGridAltRowBrush}" />
             <Setter Property="SelectionMode" Value="Single" />
             <Setter Property="SelectionUnit" Value="FullRow" />
             <Setter Property="RowHeaderWidth" Value="0" />
         </Style>
 
         <Style TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="{StaticResource DataGridHeaderBrush}" />
-            <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+            <Setter Property="Background" Value="{DynamicResource DataGridHeaderBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
             <Setter Property="BorderThickness" Value="0,0,0,1" />
             <Setter Property="Padding" Value="10,0" />
         </Style>
 
         <Style TargetType="DataGridCell">
-            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="10,0" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -323,15 +323,15 @@
 
         <Style TargetType="DataGridRow">
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="{StaticResource RowBorderBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource RowBorderBrush}" />
             <Setter Property="BorderThickness" Value="0,0,0,1" />
             <Setter Property="SnapsToDevicePixels" Value="True" />
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{StaticResource HoverBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
                 </Trigger>
                 <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="{StaticResource SelectedBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource SelectedBrush}" />
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -368,16 +368,16 @@
                 <TextBlock Text="Port Checker"
                            FontSize="29"
                            FontWeight="SemiBold"
-                           Foreground="{StaticResource InkBrush}" />
+                           Foreground="{DynamicResource InkBrush}" />
                 <TextBlock Text="本机 TCP/UDP 端口占用、进程和 svchost 服务明细"
                            Margin="0,4,0,0"
                            FontSize="14"
-                           Foreground="{StaticResource MutedBrush}" />
+                           Foreground="{DynamicResource MutedBrush}" />
             </StackPanel>
 
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                <Border Background="{StaticResource PermissionPanelBrush}"
-                        BorderBrush="{StaticResource PermissionBorderBrush}"
+                <Border Background="{DynamicResource PermissionPanelBrush}"
+                        BorderBrush="{DynamicResource PermissionBorderBrush}"
                         BorderThickness="1"
                         CornerRadius="6"
                         Padding="14,9"
@@ -386,10 +386,10 @@
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE83D;"
                                    Style="{StaticResource IconGlyph}"
-                                   Foreground="{StaticResource AccentBrush}"
+                                   Foreground="{DynamicResource AccentBrush}"
                                    Margin="0,0,8,0" />
                         <TextBlock Text="{Binding ElevationText}"
-                                   Foreground="{StaticResource AccentBrush}"
+                                   Foreground="{DynamicResource AccentBrush}"
                                    FontWeight="SemiBold"
                                    VerticalAlignment="Center" />
                     </StackPanel>
@@ -402,7 +402,7 @@
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE708;"
                                    Style="{StaticResource IconGlyph}"
-                                   Foreground="{StaticResource MutedBrush}"
+                                   Foreground="{DynamicResource MutedBrush}"
                                    Margin="0,0,8,0" />
                         <TextBlock Text="{Binding ThemeToggleText}" />
                     </StackPanel>
@@ -426,7 +426,7 @@
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE9D9;"
                                    Style="{StaticResource IconGlyph}"
-                                   Foreground="{StaticResource MutedBrush}"
+                                   Foreground="{DynamicResource MutedBrush}"
                                    Margin="0,0,8,0" />
                         <TextBlock Text="打开任务管理器" />
                     </StackPanel>
@@ -467,7 +467,7 @@
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                             <TextBlock Text="{Binding TotalCount}" Style="{StaticResource MetricValueText}" />
                             <TextBlock Text="&#x2191;"
-                                       Foreground="{StaticResource MutedBrush}"
+                                       Foreground="{DynamicResource MutedBrush}"
                                        FontSize="17"
                                        Margin="8,8,0,0" />
                         </StackPanel>
@@ -497,7 +497,7 @@
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                             <TextBlock Text="{Binding TcpCount}" Style="{StaticResource MetricValueText}" />
                             <TextBlock Text="&#x2191;"
-                                       Foreground="{StaticResource MutedBrush}"
+                                       Foreground="{DynamicResource MutedBrush}"
                                        FontSize="17"
                                        Margin="8,8,0,0" />
                         </StackPanel>
@@ -527,7 +527,7 @@
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                             <TextBlock Text="{Binding UdpCount}" Style="{StaticResource MetricValueText}" />
                             <TextBlock Text="&#x2191;"
-                                       Foreground="{StaticResource MutedBrush}"
+                                       Foreground="{DynamicResource MutedBrush}"
                                        FontSize="17"
                                        Margin="8,8,0,0" />
                         </StackPanel>
@@ -557,7 +557,7 @@
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                             <TextBlock Text="{Binding SvchostCount}" Style="{StaticResource MetricValueText}" />
                             <TextBlock Text="&#x2191;"
-                                       Foreground="{StaticResource MutedBrush}"
+                                       Foreground="{DynamicResource MutedBrush}"
                                        FontSize="17"
                                        Margin="8,8,0,0" />
                         </StackPanel>
@@ -595,12 +595,12 @@
                                      MinWidth="330" />
                             <TextBlock Text="&#xE721;"
                                        Style="{StaticResource IconGlyph}"
-                                       Foreground="{StaticResource MutedBrush}"
+                                       Foreground="{DynamicResource MutedBrush}"
                                        HorizontalAlignment="Left"
                                        Margin="13,0,0,0"
                                        IsHitTestVisible="False" />
                             <TextBlock Text="搜索端口、PID、进程、服务或路径"
-                                       Foreground="{StaticResource PlaceholderBrush}"
+                                       Foreground="{DynamicResource PlaceholderBrush}"
                                        Margin="38,0,42,0"
                                        VerticalAlignment="Center"
                                        IsHitTestVisible="False"
@@ -616,7 +616,7 @@
                                 <TextBlock Text="&#xE711;"
                                            Style="{StaticResource IconGlyph}"
                                            FontSize="12"
-                                           Foreground="{StaticResource MutedBrush}" />
+                                           Foreground="{DynamicResource MutedBrush}" />
                             </Button>
                         </Grid>
 
@@ -636,14 +636,14 @@
 
                         <TextBlock Grid.Column="3"
                                    Text="{Binding FilteredCount, StringFormat=共 {0} 条}"
-                                   Foreground="{StaticResource MutedBrush}"
+                                   Foreground="{DynamicResource MutedBrush}"
                                    VerticalAlignment="Center"
                                    Margin="18,0,0,0" />
 
                         <TextBlock Grid.Column="4"
                                    Text="&#xE71C;"
                                    Style="{StaticResource IconGlyph}"
-                                   Foreground="{StaticResource MutedBrush}"
+                                   Foreground="{DynamicResource MutedBrush}"
                                    Margin="16,0,2,0" />
                     </Grid>
 
@@ -655,12 +655,12 @@
                             <DataGridTemplateColumn Header="协议" Width="72">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Border Background="{StaticResource BadgeBrush}"
+                                        <Border Background="{DynamicResource BadgeBrush}"
                                                 CornerRadius="4"
                                                 Padding="7,3"
                                                 HorizontalAlignment="Left">
                                             <TextBlock Text="{Binding ProtocolText}"
-                                                       Foreground="{StaticResource AccentBrush}"
+                                                       Foreground="{DynamicResource AccentBrush}"
                                                        FontWeight="SemiBold"
                                                        FontSize="12" />
                                         </Border>
@@ -677,7 +677,7 @@
                             <DataGridTemplateColumn Header="远程地址" Width="176">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding RemoteEndpoint}" Style="{StaticResource MonoTableText}" Foreground="{StaticResource MutedBrush}" />
+                                        <TextBlock Text="{Binding RemoteEndpoint}" Style="{StaticResource MonoTableText}" Foreground="{DynamicResource MutedBrush}" />
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
@@ -695,8 +695,8 @@
                     </DataGrid>
 
                     <Border Grid.Row="1"
-                            Background="{StaticResource EmptyPanelBrush}"
-                            BorderBrush="{StaticResource LineBrush}"
+                            Background="{DynamicResource EmptyPanelBrush}"
+                            BorderBrush="{DynamicResource LineBrush}"
                             BorderThickness="1"
                             CornerRadius="6"
                             Padding="18"
@@ -704,7 +704,7 @@
                             VerticalAlignment="Center"
                             Visibility="{Binding EmptyPortListMessage, Converter={StaticResource StringToVisibilityConverter}}">
                         <TextBlock Text="{Binding EmptyPortListMessage}"
-                                   Foreground="{StaticResource MutedBrush}"
+                                   Foreground="{DynamicResource MutedBrush}"
                                    FontWeight="SemiBold"
                                    TextAlignment="Center"
                                    TextWrapping="Wrap" />
@@ -732,16 +732,16 @@
                                        FontWeight="SemiBold"
                                        Margin="0,12,0,0" />
                             <TextBlock Text="{Binding SelectedPort.ProcessId, StringFormat=PID {0}, TargetNullValue=PID --}"
-                                       Foreground="{StaticResource MutedBrush}"
+                                       Foreground="{DynamicResource MutedBrush}"
                                        Margin="0,3,0,0" />
                         </StackPanel>
                         <Border Grid.Column="1"
-                                Background="{StaticResource BadgeBrush}"
+                                Background="{DynamicResource BadgeBrush}"
                                 CornerRadius="4"
                                 Padding="10,5"
                                 VerticalAlignment="Top">
                             <TextBlock Text="{Binding SelectedPort.ProtocolText, TargetNullValue=--}"
-                                       Foreground="{StaticResource AccentBrush}"
+                                       Foreground="{DynamicResource AccentBrush}"
                                        FontWeight="SemiBold" />
                         </Border>
                     </Grid>
@@ -771,11 +771,11 @@
                             <TextBlock Text="命令行" Style="{StaticResource FieldLabelText}" />
                             <TextBlock Text="{Binding SelectedPort.CommandSummary, TargetNullValue=无命令行或权限不足}"
                                        TextWrapping="Wrap"
-                                       Foreground="{StaticResource InkBrush}"
+                                       Foreground="{DynamicResource InkBrush}"
                                        Margin="0,0,0,14" />
 
-                            <Border Background="{StaticResource WarningSoftBrush}"
-                                    BorderBrush="{StaticResource WarningBorderBrush}"
+                            <Border Background="{DynamicResource WarningSoftBrush}"
+                                    BorderBrush="{DynamicResource WarningBorderBrush}"
                                     BorderThickness="1"
                                     CornerRadius="8"
                                     Padding="12"
@@ -788,25 +788,25 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="&#xE946;"
                                                Style="{StaticResource IconGlyph}"
-                                               Foreground="{StaticResource WarningBrush}"
+                                               Foreground="{DynamicResource WarningBrush}"
                                                Margin="0,0,8,0"
                                                VerticalAlignment="Top" />
                                     <TextBlock Grid.Column="1"
                                                Text="{Binding ServiceOperationRiskText}"
-                                               Foreground="{StaticResource WarningTextBrush}"
+                                               Foreground="{DynamicResource WarningTextBrush}"
                                                TextWrapping="Wrap" />
                                 </Grid>
                             </Border>
 
-                            <Border Background="{StaticResource InfoPanelBrush}"
-                                    BorderBrush="{StaticResource InfoBorderBrush}"
+                            <Border Background="{DynamicResource InfoPanelBrush}"
+                                    BorderBrush="{DynamicResource InfoBorderBrush}"
                                     BorderThickness="1"
                                     CornerRadius="8"
                                     Padding="12"
                                     Margin="0,0,0,10"
                                     Visibility="{Binding ServiceOperationResult, Converter={StaticResource StringToVisibilityConverter}}">
                                 <TextBlock Text="{Binding ServiceOperationResult}"
-                                           Foreground="{StaticResource InfoTextBrush}"
+                                           Foreground="{DynamicResource InfoTextBrush}"
                                            TextWrapping="Wrap" />
                             </Border>
 
@@ -818,27 +818,27 @@
                                 <TextBlock Text="svchost 服务" Style="{StaticResource PanelTitleText}" />
                                 <TextBlock Grid.Column="1"
                                            Text="{Binding SelectedServicesCount, StringFormat={}{0} 个}"
-                                           Foreground="{StaticResource MutedBrush}"
+                                           Foreground="{DynamicResource MutedBrush}"
                                            VerticalAlignment="Center" />
                             </Grid>
 
                             <ItemsControl ItemsSource="{Binding SelectedPort.Services}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border BorderBrush="{StaticResource LineBrush}"
+                                        <Border BorderBrush="{DynamicResource LineBrush}"
                                                 BorderThickness="1"
                                                 CornerRadius="8"
                                                 Padding="12"
                                                 Margin="0,0,0,8"
-                                                Background="{StaticResource PanelAltBrush}">
+                                                Background="{DynamicResource PanelAltBrush}">
                                             <StackPanel>
                                                 <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextWrapping="Wrap" />
-                                                <TextBlock Text="{Binding Name}" Foreground="{StaticResource MutedBrush}" Margin="0,2,0,6" />
+                                                <TextBlock Text="{Binding Name}" Foreground="{DynamicResource MutedBrush}" Margin="0,2,0,6" />
                                                 <UniformGrid Columns="2">
-                                                    <TextBlock Text="{Binding State, StringFormat=服务状态：{0}}" Foreground="{StaticResource MutedBrush}" />
-                                                    <TextBlock Text="{Binding StartMode, StringFormat=启动：{0}}" Foreground="{StaticResource MutedBrush}" />
+                                                    <TextBlock Text="{Binding State, StringFormat=服务状态：{0}}" Foreground="{DynamicResource MutedBrush}" />
+                                                    <TextBlock Text="{Binding StartMode, StringFormat=启动：{0}}" Foreground="{DynamicResource MutedBrush}" />
                                                 </UniformGrid>
-                                                <TextBlock Text="{Binding PathName}" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,6,0,0" />
+                                                <TextBlock Text="{Binding PathName}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,6,0,0" />
                                                 <StackPanel Orientation="Horizontal"
                                                             HorizontalAlignment="Right"
                                                             Margin="0,10,0,0">
@@ -862,7 +862,7 @@
 
                     <StackPanel Grid.Row="2" Margin="18,10,18,14">
                         <TextBlock Text="{Binding KillProcessWarningText}"
-                                   Foreground="{StaticResource DangerBrush}"
+                                   Foreground="{DynamicResource DangerBrush}"
                                    TextWrapping="Wrap"
                                    Margin="0,0,0,10"
                                    Visibility="{Binding KillProcessWarningText, Converter={StaticResource StringToVisibilityConverter}}" />
@@ -878,7 +878,7 @@
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="&#xE8B7;"
                                                Style="{StaticResource IconGlyph}"
-                                               Foreground="{StaticResource MutedBrush}"
+                                               Foreground="{DynamicResource MutedBrush}"
                                                Margin="0,0,8,0" />
                                     <TextBlock Text="定位文件" />
                                 </StackPanel>
@@ -904,7 +904,7 @@
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="&#xE713;"
                                                Style="{StaticResource IconGlyph}"
-                                               Foreground="{StaticResource MutedBrush}"
+                                               Foreground="{DynamicResource MutedBrush}"
                                                Margin="0,0,8,0" />
                                     <TextBlock Text="按服务操作" />
                                 </StackPanel>
@@ -932,7 +932,7 @@
                     <StackPanel Margin="18,13,18,8">
                         <TextBlock Text="Windows 保留端口" Style="{StaticResource PanelTitleText}" />
                         <TextBlock Text="{Binding ReservedPortStatusMessage}"
-                                   Foreground="{StaticResource MutedBrush}"
+                                   Foreground="{DynamicResource MutedBrush}"
                                    Margin="0,3,0,0" />
                     </StackPanel>
 
@@ -949,8 +949,8 @@
                             </DataGrid.Columns>
                         </DataGrid>
 
-                        <Border Background="{StaticResource EmptyPanelBrush}"
-                                BorderBrush="{StaticResource LineBrush}"
+                        <Border Background="{DynamicResource EmptyPanelBrush}"
+                                BorderBrush="{DynamicResource LineBrush}"
                                 BorderThickness="1"
                                 CornerRadius="6"
                                 Padding="14"
@@ -958,7 +958,7 @@
                                 VerticalAlignment="Center"
                                 Visibility="{Binding EmptyReservedPortMessage, Converter={StaticResource StringToVisibilityConverter}}">
                             <TextBlock Text="{Binding EmptyReservedPortMessage}"
-                                       Foreground="{StaticResource MutedBrush}"
+                                       Foreground="{DynamicResource MutedBrush}"
                                        FontWeight="SemiBold"
                                        TextAlignment="Center"
                                        TextWrapping="Wrap" />
@@ -997,7 +997,7 @@
 
                         <TextBlock Grid.Column="2"
                                    Text="{Binding ReservedPortRangeCount, StringFormat=共 {0} 条}"
-                                   Foreground="{StaticResource MutedBrush}"
+                                   Foreground="{DynamicResource MutedBrush}"
                                    VerticalAlignment="Center"
                                    Margin="14,0,0,0" />
 
@@ -1008,7 +1008,7 @@
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="&#xE72C;"
                                            Style="{StaticResource IconGlyph}"
-                                           Foreground="{StaticResource MutedBrush}"
+                                           Foreground="{DynamicResource MutedBrush}"
                                            Margin="0,0,7,0" />
                                 <TextBlock Text="刷新保留端口" />
                             </StackPanel>
@@ -1048,7 +1048,7 @@
                             <TextBox Text="{Binding ReservedPortStart, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource CompactTextBoxStyle}" />
                             <TextBlock Text="例如 5000"
-                                       Foreground="{StaticResource SubtleBrush}"
+                                       Foreground="{DynamicResource SubtleBrush}"
                                        Margin="12,0,0,0"
                                        VerticalAlignment="Center"
                                        IsHitTestVisible="False"
@@ -1060,7 +1060,7 @@
                             <TextBox Text="{Binding ReservedPortCount, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource CompactTextBoxStyle}" />
                             <TextBlock Text="例如 50"
-                                       Foreground="{StaticResource SubtleBrush}"
+                                       Foreground="{DynamicResource SubtleBrush}"
                                        Margin="12,0,0,0"
                                        VerticalAlignment="Center"
                                        IsHitTestVisible="False"
@@ -1070,11 +1070,11 @@
 
                     <StackPanel Grid.Row="2" Margin="0,0,0,8">
                         <TextBlock Text="{Binding SelectedReservedPortRangeSummary}"
-                                   Foreground="{StaticResource MutedBrush}"
+                                   Foreground="{DynamicResource MutedBrush}"
                                    TextWrapping="Wrap"
                                    Margin="0,0,0,8" />
                         <TextBlock Text="{Binding AdministeredReservedPortRangeCount, StringFormat=用户保留 {0} 条}"
-                                   Foreground="{StaticResource MutedBrush}" />
+                                   Foreground="{DynamicResource MutedBrush}" />
                     </StackPanel>
 
                     <Grid Grid.Row="3" HorizontalAlignment="Left">
@@ -1101,7 +1101,7 @@
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="&#xE74D;"
                                            Style="{StaticResource IconGlyph}"
-                                           Foreground="{StaticResource MutedBrush}"
+                                           Foreground="{DynamicResource MutedBrush}"
                                            Margin="0,0,8,0" />
                                 <TextBlock Text="删除选中" />
                             </StackPanel>
@@ -1120,18 +1120,18 @@
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="&#xE73E;"
                            Style="{StaticResource IconGlyph}"
-                           Foreground="{StaticResource SuccessBrush}"
+                           Foreground="{DynamicResource SuccessBrush}"
                            Margin="0,0,7,0" />
                 <TextBlock Text="{Binding ScanStateText}" Style="{StaticResource StatusText}" FontWeight="SemiBold" />
-                <Border Width="1" Background="{StaticResource LineBrush}" Margin="16,2" />
+                <Border Width="1" Background="{DynamicResource LineBrush}" Margin="16,2" />
                 <TextBlock Text="{Binding PortCountStatusText}" Style="{StaticResource StatusText}" />
-                <Border Width="1" Background="{StaticResource LineBrush}" Margin="16,2" />
+                <Border Width="1" Background="{DynamicResource LineBrush}" Margin="16,2" />
                 <TextBlock Text="{Binding ScanTotalDurationText}" Style="{StaticResource StatusText}" />
-                <Border Width="1" Background="{StaticResource LineBrush}" Margin="16,2" />
+                <Border Width="1" Background="{DynamicResource LineBrush}" Margin="16,2" />
                 <TextBlock Text="{Binding ScanPortDurationText}" Style="{StaticResource StatusText}" />
-                <Border Width="1" Background="{StaticResource LineBrush}" Margin="16,2" />
+                <Border Width="1" Background="{DynamicResource LineBrush}" Margin="16,2" />
                 <TextBlock Text="{Binding ScanMetadataDurationText}" Style="{StaticResource StatusText}" />
-                <Border Width="1" Background="{StaticResource LineBrush}" Margin="16,2" />
+                <Border Width="1" Background="{DynamicResource LineBrush}" Margin="16,2" />
                 <TextBlock Text="{Binding ScanProcessCountText}" Style="{StaticResource StatusText}" />
             </StackPanel>
 
