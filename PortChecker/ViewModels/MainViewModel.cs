@@ -939,9 +939,8 @@ internal sealed class MainViewModel : ObservableObject
             $"{ApplicationInfo.Name}{Environment.NewLine}" +
             $"版本：{ApplicationInfo.CurrentVersionText}{Environment.NewLine}" +
             $"开发者：{ApplicationInfo.DeveloperName}{Environment.NewLine}" +
-            $"证书：{ApplicationInfo.CertificateName}{Environment.NewLine}" +
             $"仓库：{ApplicationInfo.RepositoryUrl}{Environment.NewLine}" +
-            $"许可证：{ApplicationInfo.LicenseName}{Environment.NewLine}{Environment.NewLine}" +
+            $"开源许可证：{ApplicationInfo.LicenseName}{Environment.NewLine}{Environment.NewLine}" +
             ApplicationInfo.LicenseDescription,
             $"关于 {ApplicationInfo.Name}",
             MessageBoxButton.OK,
