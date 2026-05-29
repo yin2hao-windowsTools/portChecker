@@ -25,6 +25,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
@@ -91,6 +93,132 @@ jobs:
             -Runtime win-x64 `
             -OutputRoot artifacts
 
+      - name: Generate release notes
+        if: steps.release.outputs.is_prerelease == 'false'
+        id: notes
+        shell: pwsh
+        run: |
+          $tagName = '${{ steps.release.outputs.tag_name }}'
+          $displayVersion = '${{ steps.release.outputs.display_version }}'
+          $repository = '${{ github.repository }}'
+          $notesPath = Join-Path $env:RUNNER_TEMP 'release-notes.md'
+          $assets = Get-ChildItem -LiteralPath artifacts/dist -File | Sort-Object Name
+
+          if ($assets.Count -eq 0) {
+            throw "No release assets were produced."
+          }
+
+          $previousTag = git tag --sort=-version:refname | Where-Object { $_ -ne $tagName } | Select-Object -First 1
+          $commitRange = if ($previousTag) { "$previousTag..$tagName" } else { $tagName }
+          $rawCommits = git log $commitRange --pretty=format:'%H%x09%h%x09%s'
+
+          $preferredTypeOrder = @('feature', 'fix', 'optimize', 'ci')
+          $groupedCommits = [ordered]@{}
+
+          foreach ($rawCommit in $rawCommits) {
+            if ([string]::IsNullOrWhiteSpace($rawCommit)) {
+              continue
+            }
+
+            $parts = $rawCommit -split "`t", 3
+            if ($parts.Count -lt 3) {
+              continue
+            }
+
+            $fullSha = $parts[0]
+            $shortSha = $parts[1]
+            $subject = $parts[2]
+
+            if ($subject -match '^\[(?<type>[^\]]+)\]\s*(?<message>.+)$') {
+              $type = $Matches['type'].ToLowerInvariant()
+              $message = $Matches['message']
+            }
+            else {
+              $type = 'other'
+              $message = $subject
+            }
+
+            if (-not $groupedCommits.Contains($type)) {
+              $groupedCommits[$type] = [System.Collections.Generic.List[object]]::new()
+            }
+
+            $groupedCommits[$type].Add([pscustomobject]@{
+              FullSha  = $fullSha
+              ShortSha = $shortSha
+              Message  = $message
+            })
+          }
+
+          $sectionOrder = [System.Collections.Generic.List[string]]::new()
+          foreach ($type in $preferredTypeOrder) {
+            if ($groupedCommits.Contains($type)) {
+              $sectionOrder.Add($type)
+            }
+          }
+
+          foreach ($type in ($groupedCommits.Keys | Where-Object { $preferredTypeOrder -notcontains $_ } | Sort-Object)) {
+            $sectionOrder.Add($type)
+          }
+
+          $downloadRows = foreach ($asset in $assets) {
+            $assetName = $asset.Name
+            $assetUrl = "https://github.com/$repository/releases/download/$tagName/$assetName"
+
+            if ($assetName -like '*-portable.zip') {
+              $kind = 'portable ZIP'
+            }
+            elseif ($asset.Extension -eq '.msi') {
+              $kind = 'MSI installer'
+            }
+            elseif ($asset.Extension -eq '.exe') {
+              $kind = 'EXE installer'
+            }
+            else {
+              $kind = $asset.Extension.TrimStart('.').ToUpperInvariant()
+            }
+
+            "| Windows | $kind | $assetName | [下载]($assetUrl) |"
+          }
+
+          $noteLines = [System.Collections.Generic.List[string]]::new()
+          $noteLines.Add("## What's Changed")
+          $noteLines.Add("")
+
+          if ($sectionOrder.Count -eq 0) {
+            $noteLines.Add("- No user-facing changes were detected in this release.")
+          }
+          else {
+            foreach ($type in $sectionOrder) {
+              $noteLines.Add("[$type]:")
+              $noteLines.Add("")
+              foreach ($entry in $groupedCommits[$type]) {
+                $commitUrl = "https://github.com/$repository/commit/$($entry.FullSha)"
+                $noteLines.Add('- [`' + $entry.ShortSha + '`](' + $commitUrl + ') ' + $entry.Message)
+              }
+              $noteLines.Add("")
+            }
+          }
+
+          if ($previousTag) {
+            $compareUrl = "https://github.com/$repository/compare/$previousTag...$tagName"
+            $noteLines.Add('Full Changelog: [`' + $previousTag + '...' + $tagName + '`](' + $compareUrl + ')')
+          }
+          else {
+            $noteLines.Add("Full Changelog: Initial release")
+          }
+
+          $noteLines.Add("")
+          $noteLines.Add("## 发行版")
+          $noteLines.Add("")
+          $noteLines.Add("| 平台 | 类型 | 文件 | 快速链接 |")
+          $noteLines.Add("| --- | --- | --- | --- |")
+          foreach ($row in $downloadRows) {
+            $noteLines.Add($row)
+          }
+
+          [System.IO.File]::WriteAllLines($notesPath, $noteLines, [System.Text.UTF8Encoding]::new($false))
+          "path=$notesPath" >> $env:GITHUB_OUTPUT
+
       - name: Upload test build artifact
         if: steps.release.outputs.is_prerelease == 'true'
         uses: actions/upload-artifact@v7
@@ -108,26 +236,18 @@ jobs:
         run: |
           $tagName = '${{ steps.release.outputs.tag_name }}'
           $displayVersion = '${{ steps.release.outputs.display_version }}'
+          $notesPath = '${{ steps.notes.outputs.path }}'
           $assets = Get-ChildItem -LiteralPath artifacts/dist -File | ForEach-Object { $_.FullName }
 
           if ($assets.Count -eq 0) {
             throw "No release assets were produced."
           }
 
-          $notes = @"
-          Automated build for $tagName.
-
-          Version normalization: $displayVersion
-          Packages:
-          - EXE
-          - MSI
-          - portable ZIP
-          "@
-
           gh release view $tagName *> $null
           if ($LASTEXITCODE -eq 0) {
             gh release upload $tagName --clobber $assets
+            gh release edit $tagName --title "PortChecker v$displayVersion" --notes-file $notesPath
           }
           else {
-            gh release create $tagName $assets --title "PortChecker v$displayVersion" --notes $notes --verify-tag
+            gh release create $tagName $assets --title "PortChecker v$displayVersion" --notes-file $notesPath --verify-tag
           }
