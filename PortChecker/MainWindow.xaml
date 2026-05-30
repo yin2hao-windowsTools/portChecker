@@ -344,6 +344,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="1.55*" />
             <RowDefinition Height="1.05*" />
+            <RowDefinition Height="1.05*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
@@ -1112,7 +1113,201 @@
             </Border>
         </Grid>
 
-        <Grid Grid.Row="4" Margin="0,13,0,0">
+        <Grid Grid.Row="4" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.05*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="1.2*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Style="{StaticResource CardBorder}" Padding="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Margin="18,13,18,8">
+                        <TextBlock Text="Windows 动态端口" Style="{StaticResource PanelTitleText}" />
+                        <TextBlock Text="{Binding DynamicPortStatusMessage}"
+                                   Foreground="{DynamicResource MutedBrush}"
+                                   Margin="0,3,0,0" />
+                    </StackPanel>
+
+                    <Grid Grid.Row="1">
+                        <DataGrid ItemsSource="{Binding DynamicPortRanges}"
+                                  SelectedItem="{Binding SelectedDynamicPortRange, Mode=TwoWay}"
+                                  Margin="1,0,1,1">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="地址族" Binding="{Binding AddressFamilyText}" Width="90" />
+                                <DataGridTextColumn Header="协议" Binding="{Binding ProtocolText}" Width="80" />
+                                <DataGridTextColumn Header="范围" Binding="{Binding RangeText}" Width="160" />
+                                <DataGridTextColumn Header="端口数" Binding="{Binding PortCount}" Width="92" />
+                                <DataGridTextColumn Header="存储" Binding="{Binding StoreText}" Width="96" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <Border Background="{DynamicResource EmptyPanelBrush}"
+                                BorderBrush="{DynamicResource LineBrush}"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="14"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Visibility="{Binding EmptyDynamicPortMessage, Converter={StaticResource StringToVisibilityConverter}}">
+                            <TextBlock Text="{Binding EmptyDynamicPortMessage}"
+                                       Foreground="{DynamicResource MutedBrush}"
+                                       FontWeight="SemiBold"
+                                       TextAlignment="Center"
+                                       TextWrapping="Wrap" />
+                        </Border>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="2" Style="{StaticResource CardBorder}" Padding="0">
+                <Grid Margin="18,13,18,14">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Text="设置动态范围"
+                                   Style="{StaticResource PanelTitleText}"
+                                   VerticalAlignment="Center" />
+
+                        <ComboBox Grid.Column="1"
+                                  ItemsSource="{Binding ReservedPortListStores}"
+                                  SelectedItem="{Binding DynamicPortListStore}"
+                                  Style="{StaticResource ComboBoxStyle}"
+                                  MinWidth="110"
+                                  Margin="10,0,0,0" />
+
+                        <TextBlock Grid.Column="2"
+                                   Text="{Binding DynamicPortRangeCount, StringFormat=共 {0} 条}"
+                                   Foreground="{DynamicResource MutedBrush}"
+                                   VerticalAlignment="Center"
+                                   Margin="14,0,0,0" />
+
+                        <Button Grid.Column="3"
+                                Command="{Binding RefreshDynamicPortsCommand}"
+                                Style="{StaticResource SecondaryButton}"
+                                Margin="12,0,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE72C;"
+                                           Style="{StaticResource IconGlyph}"
+                                           Foreground="{DynamicResource MutedBrush}"
+                                           Margin="0,0,7,0" />
+                                <TextBlock Text="刷新动态端口" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <Grid Grid.Row="1" Margin="0,12,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*" />
+                            <ColumnDefinition Width="18" />
+                            <ColumnDefinition Width="1*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Text="地址族" Style="{StaticResource FieldLabelText}" />
+                        <ComboBox Grid.Row="1"
+                                  ItemsSource="{Binding DynamicPortAddressFamilies}"
+                                  SelectedItem="{Binding DynamicPortAddressFamily}"
+                                  Style="{StaticResource ComboBoxStyle}"
+                                  MinWidth="0" />
+
+                        <TextBlock Grid.Column="2" Text="协议" Style="{StaticResource FieldLabelText}" />
+                        <ComboBox Grid.Row="1"
+                                  Grid.Column="2"
+                                  ItemsSource="{Binding DynamicPortProtocols}"
+                                  SelectedItem="{Binding DynamicPortProtocol}"
+                                  Style="{StaticResource ComboBoxStyle}"
+                                  MinWidth="0" />
+
+                        <TextBlock Grid.Row="2" Text="起始端口" Style="{StaticResource FieldLabelText}" Margin="0,12,0,5" />
+                        <Grid Grid.Row="3">
+                            <TextBox Text="{Binding DynamicPortStart, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource CompactTextBoxStyle}" />
+                            <TextBlock Text="例如 49152"
+                                       Foreground="{DynamicResource SubtleBrush}"
+                                       Margin="12,0,0,0"
+                                       VerticalAlignment="Center"
+                                       IsHitTestVisible="False"
+                                       Visibility="{Binding DynamicPortStart, Converter={StaticResource EmptyStringToVisibilityConverter}}" />
+                        </Grid>
+
+                        <TextBlock Grid.Row="2" Grid.Column="2" Text="端口数量" Style="{StaticResource FieldLabelText}" Margin="0,12,0,5" />
+                        <Grid Grid.Row="3" Grid.Column="2">
+                            <TextBox Text="{Binding DynamicPortCount, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource CompactTextBoxStyle}" />
+                            <TextBlock Text="例如 16384"
+                                       Foreground="{DynamicResource SubtleBrush}"
+                                       Margin="12,0,0,0"
+                                       VerticalAlignment="Center"
+                                       IsHitTestVisible="False"
+                                       Visibility="{Binding DynamicPortCount, Converter={StaticResource EmptyStringToVisibilityConverter}}" />
+                        </Grid>
+                    </Grid>
+
+                    <StackPanel Grid.Row="2" Margin="0,0,0,8">
+                        <TextBlock Text="{Binding SelectedDynamicPortRangeSummary}"
+                                   Foreground="{DynamicResource MutedBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,8" />
+                        <TextBlock Text="修改动态端口会影响系统自动分配临时端口的区间。"
+                                   Foreground="{DynamicResource MutedBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,8" />
+                        <TextBlock Text="{Binding DynamicPortStore, StringFormat=写入目标：{0}}"
+                                   Foreground="{DynamicResource MutedBrush}" />
+                    </StackPanel>
+
+                    <Grid Grid.Row="3" HorizontalAlignment="Left">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="164" />
+                            <ColumnDefinition Width="18" />
+                            <ColumnDefinition Width="164" />
+                        </Grid.ColumnDefinitions>
+
+                        <Button Command="{Binding SetDynamicPortRangeCommand}"
+                                Style="{StaticResource PrimaryButton}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE70F;"
+                                           Style="{StaticResource IconGlyph}"
+                                           Foreground="White"
+                                           Margin="0,0,8,0" />
+                                <TextBlock Text="设置范围" Foreground="White" />
+                            </StackPanel>
+                        </Button>
+
+                        <ComboBox Grid.Column="2"
+                                  ItemsSource="{Binding ReservedPortListStores}"
+                                  SelectedItem="{Binding DynamicPortStore}"
+                                  Style="{StaticResource ComboBoxStyle}"
+                                  MinWidth="164" />
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Grid Grid.Row="5" Margin="0,13,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />

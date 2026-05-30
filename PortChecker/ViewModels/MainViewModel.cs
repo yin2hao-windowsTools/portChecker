@@ -16,14 +16,17 @@ internal sealed class MainViewModel : ObservableObject
     private readonly PortMonitorService _portMonitorService = new();
     private readonly ProcessControlService _processControlService = new();
     private readonly ReservedPortRangeService _reservedPortRangeService = new();
+    private readonly DynamicPortRangeService _dynamicPortRangeService = new();
     private readonly ExternalLinkService _externalLinkService = new();
     private readonly ReleaseUpdateService _releaseUpdateService = new();
     private readonly UpdateInstallService _updateInstallService = new();
     private readonly BulkObservableCollection<PortEntry> _ports = [];
     private readonly BulkObservableCollection<ReservedPortRange> _reservedPortRanges = [];
+    private readonly BulkObservableCollection<DynamicPortRange> _dynamicPortRanges = [];
     private readonly DispatcherTimer _searchDebounceTimer;
     private CancellationTokenSource? _refreshCancellation;
     private CancellationTokenSource? _reservedPortRefreshCancellation;
+    private CancellationTokenSource? _dynamicPortRefreshCancellation;
     private string _searchText = string.Empty;
     private string _searchKeyword = string.Empty;
     private string _protocolFilter = "全部";
@@ -35,11 +38,22 @@ internal sealed class MainViewModel : ObservableObject
     private string _reservedPortListStore = "active";
     private string _reservedPortStart = string.Empty;
     private string _reservedPortCount = "1";
+    private DynamicPortRange? _selectedDynamicPortRange;
+    private string _dynamicPortAddressFamily = "IPv4";
+    private string _dynamicPortProtocol = "TCP";
+    private string _dynamicPortStore = "persistent";
+    private string _dynamicPortListStore = "active";
+    private string _dynamicPortStart = "49152";
+    private string _dynamicPortCount = "16384";
     private bool _isRefreshingReservedPorts;
     private bool _isManagingReservedPort;
+    private bool _isRefreshingDynamicPorts;
+    private bool _isManagingDynamicPort;
     private bool _isDarkMode;
     private string _reservedPortStatusMessage = "保留端口尚未刷新";
     private string _emptyReservedPortMessage = string.Empty;
+    private string _dynamicPortStatusMessage = "动态端口尚未刷新";
+    private string _emptyDynamicPortMessage = string.Empty;
     private bool _isRefreshing;
     private string _statusMessage = "准备扫描端口";
     private string _scanStateText = "等待扫描";
@@ -71,6 +85,8 @@ internal sealed class MainViewModel : ObservableObject
         RefreshReservedPortsCommand = new AsyncRelayCommand(RefreshReservedPortsAsync, () => !IsRefreshingReservedPorts);
         AddReservedPortRangeCommand = new AsyncRelayCommand(AddReservedPortRangeAsync, () => CanAddReservedPortRange);
         DeleteReservedPortRangeCommand = new AsyncRelayCommand(DeleteReservedPortRangeAsync, () => CanDeleteReservedPortRange);
+        RefreshDynamicPortsCommand = new AsyncRelayCommand(RefreshDynamicPortsAsync, () => !IsRefreshingDynamicPorts);
+        SetDynamicPortRangeCommand = new AsyncRelayCommand(SetDynamicPortRangeAsync, () => CanSetDynamicPortRange);
         KillProcessCommand = new AsyncRelayCommand(KillSelectedProcessAsync, () => CanKillSelectedProcess);
         StopServiceCommand = new AsyncRelayCommand(StopServiceAsync, CanControlService);
         RestartServiceCommand = new AsyncRelayCommand(RestartServiceAsync, CanControlService);
@@ -89,6 +105,8 @@ internal sealed class MainViewModel : ObservableObject
 
     public IReadOnlyList<ReservedPortRange> ReservedPortRanges => _reservedPortRanges;
 
+    public IReadOnlyList<DynamicPortRange> DynamicPortRanges => _dynamicPortRanges;
+
     public IReadOnlyList<string> ProtocolFilters { get; } = ["全部", "TCP", "UDP"];
 
     public IReadOnlyList<string> StateFilters { get; } = ["全部", "LISTENING", "BOUND", "ESTABLISHED", "TIME_WAIT", "UDP"];
@@ -97,6 +115,10 @@ internal sealed class MainViewModel : ObservableObject
 
     public IReadOnlyList<string> ReservedPortListStores { get; } = ["active", "persistent"];
 
+    public IReadOnlyList<string> DynamicPortAddressFamilies { get; } = ["IPv4", "IPv6"];
+
+    public IReadOnlyList<string> DynamicPortProtocols { get; } = ["TCP", "UDP"];
+
     public AsyncRelayCommand RefreshCommand { get; }
 
     public AsyncRelayCommand RefreshReservedPortsCommand { get; }
@@ -104,6 +126,10 @@ internal sealed class MainViewModel : ObservableObject
     public AsyncRelayCommand AddReservedPortRangeCommand { get; }
 
     public AsyncRelayCommand DeleteReservedPortRangeCommand { get; }
+
+    public AsyncRelayCommand RefreshDynamicPortsCommand { get; }
+
+    public AsyncRelayCommand SetDynamicPortRangeCommand { get; }
 
     public AsyncRelayCommand KillProcessCommand { get; }
 
@@ -273,6 +299,84 @@ internal sealed class MainViewModel : ObservableObject
         }
     }
 
+    public string DynamicPortAddressFamily
+    {
+        get => _dynamicPortAddressFamily;
+        set
+        {
+            if (SetProperty(ref _dynamicPortAddressFamily, NormalizeAddressFamilyText(value)))
+            {
+                SetDynamicPortRangeCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanSetDynamicPortRange));
+            }
+        }
+    }
+
+    public string DynamicPortProtocol
+    {
+        get => _dynamicPortProtocol;
+        set
+        {
+            if (SetProperty(ref _dynamicPortProtocol, value ?? "TCP"))
+            {
+                SetDynamicPortRangeCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanSetDynamicPortRange));
+            }
+        }
+    }
+
+    public string DynamicPortStore
+    {
+        get => _dynamicPortStore;
+        set
+        {
+            if (SetProperty(ref _dynamicPortStore, NormalizePortStore(value)))
+            {
+                SetDynamicPortRangeCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanSetDynamicPortRange));
+            }
+        }
+    }
+
+    public string DynamicPortListStore
+    {
+        get => _dynamicPortListStore;
+        set
+        {
+            var normalizedValue = NormalizePortStore(value);
+            if (SetProperty(ref _dynamicPortListStore, normalizedValue))
+            {
+                _ = RefreshDynamicPortsAsync();
+            }
+        }
+    }
+
+    public string DynamicPortStart
+    {
+        get => _dynamicPortStart;
+        set
+        {
+            if (SetProperty(ref _dynamicPortStart, value ?? string.Empty))
+            {
+                SetDynamicPortRangeCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanSetDynamicPortRange));
+            }
+        }
+    }
+
+    public string DynamicPortCount
+    {
+        get => _dynamicPortCount;
+        set
+        {
+            if (SetProperty(ref _dynamicPortCount, value ?? string.Empty))
+            {
+                SetDynamicPortRangeCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanSetDynamicPortRange));
+            }
+        }
+    }
+
     public bool IsRefreshing
     {
         get => _isRefreshing;
@@ -322,6 +426,44 @@ internal sealed class MainViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(ThemeToggleText));
                 OnPropertyChanged(nameof(ThemeToggleToolTip));
+            }
+        }
+    }
+
+    public bool IsRefreshingDynamicPorts
+    {
+        get => _isRefreshingDynamicPorts;
+        private set
+        {
+            if (SetProperty(ref _isRefreshingDynamicPorts, value))
+            {
+                RefreshDynamicPortsCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanSetDynamicPortRange));
+            }
+        }
+    }
+
+    public bool IsManagingDynamicPort
+    {
+        get => _isManagingDynamicPort;
+        private set
+        {
+            if (SetProperty(ref _isManagingDynamicPort, value))
+            {
+                SetDynamicPortRangeCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanSetDynamicPortRange));
+            }
+        }
+    }
+
+    public DynamicPortRange? SelectedDynamicPortRange
+    {
+        get => _selectedDynamicPortRange;
+        set
+        {
+            if (SetProperty(ref _selectedDynamicPortRange, value))
+            {
+                OnPropertyChanged(nameof(SelectedDynamicPortRangeSummary));
             }
         }
     }
@@ -382,6 +524,18 @@ internal sealed class MainViewModel : ObservableObject
     {
         get => _emptyReservedPortMessage;
         private set => SetProperty(ref _emptyReservedPortMessage, value);
+    }
+
+    public string DynamicPortStatusMessage
+    {
+        get => _dynamicPortStatusMessage;
+        private set => SetProperty(ref _dynamicPortStatusMessage, value);
+    }
+
+    public string EmptyDynamicPortMessage
+    {
+        get => _emptyDynamicPortMessage;
+        private set => SetProperty(ref _emptyDynamicPortMessage, value);
     }
 
     public string PermissionNotice
@@ -453,6 +607,8 @@ internal sealed class MainViewModel : ObservableObject
 
     public int AdministeredReservedPortRangeCount => _reservedPortRanges.Count(range => range.IsAdministered);
 
+    public int DynamicPortRangeCount => _dynamicPortRanges.Count;
+
     public int FilteredCount => PortsView.Cast<object>().Count();
 
     public int SelectedServicesCount => SelectedPort?.Services.Count ?? 0;
@@ -463,11 +619,19 @@ internal sealed class MainViewModel : ObservableObject
 
     public bool CanDeleteReservedPortRange => !IsManagingReservedPort && SelectedReservedPortRange is { IsAdministered: true };
 
+    public bool CanSetDynamicPortRange => !IsRefreshingDynamicPorts
+        && !IsManagingDynamicPort
+        && TryBuildDynamicPortRangeRequest(out _, out _, out _, out _);
+
     public string SelectedReservedPortRangeSummary => SelectedReservedPortRange is null
         ? "未选择保留端口"
         : SelectedReservedPortRange.IsAdministered
             ? SelectedReservedPortRange.DeleteTargetText
             : $"{SelectedReservedPortRange.DeleteTargetText}；系统保留范围不可直接删除";
+
+    public string SelectedDynamicPortRangeSummary => SelectedDynamicPortRange is null
+        ? "未选择动态端口范围"
+        : $"当前选中：{SelectedDynamicPortRange.TargetText}";
 
     public string LastScannedText => LastScannedAt is null ? "尚未扫描" : LastScannedAt.Value.ToString("yyyy-MM-dd HH:mm:ss");
 
@@ -475,7 +639,7 @@ internal sealed class MainViewModel : ObservableObject
 
     public async Task InitializeAsync()
     {
-        await Task.WhenAll(RefreshAsync(), RefreshReservedPortsAsync());
+        await Task.WhenAll(RefreshAsync(), RefreshReservedPortsAsync(), RefreshDynamicPortsAsync());
     }
 
     private async Task RefreshAsync()
@@ -731,6 +895,160 @@ internal sealed class MainViewModel : ObservableObject
         }
 
         return RefreshReservedPortsAsync();
+    }
+
+    private async Task RefreshDynamicPortsAsync()
+    {
+        var previousCancellation = _dynamicPortRefreshCancellation;
+        var currentCancellation = new CancellationTokenSource();
+        _dynamicPortRefreshCancellation = currentCancellation;
+        previousCancellation?.Cancel();
+
+        var cancellationToken = currentCancellation.Token;
+
+        IsRefreshingDynamicPorts = true;
+        EmptyDynamicPortMessage = string.Empty;
+        DynamicPortStatusMessage = $"正在读取 {GetStoreDisplayText(DynamicPortListStore)}动态端口...";
+
+        try
+        {
+            var ranges = await _dynamicPortRangeService.GetDynamicRangesAsync(DynamicPortListStore, cancellationToken);
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
+            var previousSelectedRange = SelectedDynamicPortRange;
+            _dynamicPortRanges.ReplaceAll(ranges);
+            SelectedDynamicPortRange = FindMatchingDynamicPortRange(previousSelectedRange) ?? _dynamicPortRanges.FirstOrDefault();
+            RaiseDynamicPortProperties();
+
+            DynamicPortStatusMessage = ranges.Count == 0
+                ? $"{GetStoreDisplayText(DynamicPortListStore)}动态端口为空"
+                : $"已读取 {ranges.Count} 条{GetStoreDisplayText(DynamicPortListStore)}动态端口范围";
+        }
+        catch (OperationCanceledException)
+        {
+            if (ReferenceEquals(_dynamicPortRefreshCancellation, currentCancellation))
+            {
+                DynamicPortStatusMessage = "动态端口刷新已取消";
+            }
+        }
+        catch (Exception exception)
+        {
+            DynamicPortStatusMessage = $"动态端口读取失败：{exception.Message}";
+            _dynamicPortRanges.ReplaceAll([]);
+            SelectedDynamicPortRange = null;
+            RaiseDynamicPortProperties();
+        }
+        finally
+        {
+            if (ReferenceEquals(_dynamicPortRefreshCancellation, currentCancellation))
+            {
+                IsRefreshingDynamicPorts = false;
+                _dynamicPortRefreshCancellation = null;
+                UpdateEmptyDynamicPortMessage();
+            }
+
+            currentCancellation.Dispose();
+        }
+    }
+
+    private async Task SetDynamicPortRangeAsync()
+    {
+        if (!TryBuildDynamicPortRangeRequest(out var addressFamily, out var protocol, out var startPort, out var portCount))
+        {
+            MessageBox.Show("请输入有效的地址族、协议、起始端口和端口数量。", "动态端口", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var endPort = startPort + portCount - 1;
+        var targetText = $"{addressFamily} {protocol.ToString().ToUpperInvariant()} {FormatPortRange(startPort, endPort)}（{GetStoreDisplayText(DynamicPortStore)}）";
+        var result = MessageBox.Show(
+            $"确定要将 Windows 动态端口范围设置为 {targetText} 吗？{Environment.NewLine}{Environment.NewLine}这会影响系统自动分配临时端口的区间。",
+            "设置动态端口",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning,
+            MessageBoxResult.No);
+
+        if (result != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        await ManageDynamicPortRangeAsync(
+            targetText,
+            () => _dynamicPortRangeService.SetDynamicRangeAsync(addressFamily, protocol, startPort, portCount, DynamicPortStore, CancellationToken.None),
+            () => _dynamicPortRangeService.SetDynamicRangeElevatedAsync(addressFamily, protocol, startPort, portCount, DynamicPortStore, CancellationToken.None),
+            DynamicPortStore);
+    }
+
+    private async Task ManageDynamicPortRangeAsync(
+        string targetText,
+        Func<Task> operation,
+        Func<Task> elevatedOperation,
+        string refreshStore)
+    {
+        IsManagingDynamicPort = true;
+
+        try
+        {
+            DynamicPortStatusMessage = $"正在设置动态端口范围 {targetText}...";
+            await operation();
+            DynamicPortStatusMessage = $"已设置动态端口范围 {targetText}，正在刷新列表...";
+            await RefreshDynamicPortsForStoreAsync(refreshStore);
+            DynamicPortStatusMessage = $"已设置动态端口范围 {targetText}。";
+        }
+        catch (ProcessControlException exception) when (exception.CanRetryElevated)
+        {
+            var elevateResult = MessageBox.Show(
+                $"{exception.Message}{Environment.NewLine}{Environment.NewLine}是否以管理员权限重试设置动态端口范围 {targetText}？",
+                "需要管理员权限",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning,
+                MessageBoxResult.No);
+
+            if (elevateResult != MessageBoxResult.Yes)
+            {
+                DynamicPortStatusMessage = $"设置动态端口受限：{exception.Message}";
+                return;
+            }
+
+            try
+            {
+                DynamicPortStatusMessage = $"正在请求管理员权限设置动态端口范围 {targetText}...";
+                await elevatedOperation();
+                DynamicPortStatusMessage = $"已通过管理员权限设置动态端口范围 {targetText}，正在刷新列表...";
+                await RefreshDynamicPortsForStoreAsync(refreshStore);
+                DynamicPortStatusMessage = $"已通过管理员权限设置动态端口范围 {targetText}。";
+            }
+            catch (Exception elevatedException)
+            {
+                DynamicPortStatusMessage = $"管理员权限设置动态端口失败：{elevatedException.Message}";
+                MessageBox.Show(DynamicPortStatusMessage, "动态端口操作失败", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        catch (Exception exception)
+        {
+            DynamicPortStatusMessage = $"设置动态端口失败：{exception.Message}";
+            MessageBox.Show(DynamicPortStatusMessage, "动态端口操作失败", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsManagingDynamicPort = false;
+            UpdateEmptyDynamicPortMessage();
+        }
+    }
+
+    private Task RefreshDynamicPortsForStoreAsync(string store)
+    {
+        var normalizedStore = NormalizePortStore(store);
+        if (!DynamicPortListStore.Equals(normalizedStore, StringComparison.OrdinalIgnoreCase))
+        {
+            SetProperty(ref _dynamicPortListStore, normalizedStore, nameof(DynamicPortListStore));
+        }
+
+        return RefreshDynamicPortsAsync();
     }
 
     private async Task KillSelectedProcessAsync()
@@ -1203,6 +1521,16 @@ internal sealed class MainViewModel : ObservableObject
         };
     }
 
+    private void UpdateEmptyDynamicPortMessage()
+    {
+        EmptyDynamicPortMessage = (IsRefreshingDynamicPorts, _dynamicPortRanges.Count) switch
+        {
+            (true, _) => string.Empty,
+            (false, 0) => $"{GetStoreDisplayText(DynamicPortListStore)}动态端口为空，或当前权限无法读取。点击刷新可重新获取。",
+            _ => string.Empty
+        };
+    }
+
     private PortEntry? FindMatchingPort(PortEntry? port)
     {
         if (port is null)
@@ -1233,6 +1561,21 @@ internal sealed class MainViewModel : ObservableObject
             && candidate.Store.Equals(range.Store, StringComparison.OrdinalIgnoreCase));
     }
 
+    private DynamicPortRange? FindMatchingDynamicPortRange(DynamicPortRange? range)
+    {
+        if (range is null)
+        {
+            return null;
+        }
+
+        return _dynamicPortRanges.FirstOrDefault(candidate =>
+            candidate.AddressFamily.Equals(range.AddressFamily, StringComparison.OrdinalIgnoreCase)
+            && candidate.Protocol == range.Protocol
+            && candidate.StartPort == range.StartPort
+            && candidate.PortCount == range.PortCount
+            && candidate.Store.Equals(range.Store, StringComparison.OrdinalIgnoreCase));
+    }
+
     private bool TryBuildReservedPortRangeRequest(
         out PortProtocol protocol,
         out int startPort,
@@ -1255,6 +1598,38 @@ internal sealed class MainViewModel : ObservableObject
 
         if (!int.TryParse(ReservedPortStart, out startPort)
             || !int.TryParse(ReservedPortCount, out portCount)
+            || startPort is < 0 or > 65535
+            || portCount <= 0
+            || startPort + portCount - 1 > 65535)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool TryBuildDynamicPortRangeRequest(
+        out string addressFamily,
+        out PortProtocol protocol,
+        out int startPort,
+        out int portCount)
+    {
+        addressFamily = NormalizeAddressFamilyText(DynamicPortAddressFamily);
+        protocol = PortProtocol.Tcp;
+        startPort = 0;
+        portCount = 0;
+
+        if (DynamicPortProtocol.Equals("UDP", StringComparison.OrdinalIgnoreCase))
+        {
+            protocol = PortProtocol.Udp;
+        }
+        else if (!DynamicPortProtocol.Equals("TCP", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (!int.TryParse(DynamicPortStart, out startPort)
+            || !int.TryParse(DynamicPortCount, out portCount)
             || startPort is < 0 or > 65535
             || portCount <= 0
             || startPort + portCount - 1 > 65535)
@@ -1310,11 +1685,30 @@ internal sealed class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(SelectedReservedPortRangeSummary));
     }
 
+    private void RaiseDynamicPortProperties()
+    {
+        OnPropertyChanged(nameof(DynamicPortRangeCount));
+        OnPropertyChanged(nameof(CanSetDynamicPortRange));
+        OnPropertyChanged(nameof(SelectedDynamicPortRangeSummary));
+    }
+
     private static string NormalizeReservedPortStore(string? store)
+    {
+        return NormalizePortStore(store);
+    }
+
+    private static string NormalizePortStore(string? store)
     {
         return string.Equals(store, "active", StringComparison.OrdinalIgnoreCase)
             ? "active"
             : "persistent";
+    }
+
+    private static string NormalizeAddressFamilyText(string? value)
+    {
+        return string.Equals(value, "IPv6", StringComparison.OrdinalIgnoreCase)
+            ? "IPv6"
+            : "IPv4";
     }
 
     private static string GetStoreDisplayText(string store)

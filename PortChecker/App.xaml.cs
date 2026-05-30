@@ -14,7 +14,8 @@ public partial class App : Application
         CrashReportService.Register(this);
 
         if (ProcessControlService.TryHandleElevatedCommand(e.Args)
-            || ReservedPortRangeService.TryHandleElevatedCommand(e.Args))
+            || ReservedPortRangeService.TryHandleElevatedCommand(e.Args)
+            || DynamicPortRangeService.TryHandleElevatedCommand(e.Args))
         {
             Shutdown(Environment.ExitCode);
             return;
