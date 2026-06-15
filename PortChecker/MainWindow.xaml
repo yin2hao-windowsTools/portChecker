@@ -3,10 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:converters="clr-namespace:PortChecker.Converters"
         Title="Port Checker"
-        Width="1420"
-        Height="820"
-        MinWidth="1120"
-        MinHeight="720"
+        Width="1600"
+        Height="860"
+        MinWidth="1360"
+        MinHeight="760"
         Background="{DynamicResource WindowBackgroundBrush}"
         FontFamily="Segoe UI"
         FontSize="13"
@@ -719,21 +719,49 @@
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="0" />
+            <Setter Property="TabStripPlacement" Value="Left" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TabControl">
                         <Grid KeyboardNavigation.TabNavigation="Local">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
-                            <TabPanel x:Name="HeaderPanel"
-                                      Grid.Row="0"
-                                      IsItemsHost="True"
-                                      KeyboardNavigation.TabIndex="1"
-                                      Panel.ZIndex="1" />
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border Background="{DynamicResource PanelBrush}"
+                                    BorderBrush="{DynamicResource LineBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Padding="12"
+                                    SnapsToDevicePixels="True">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+
+                                    <StackPanel Margin="4,2,4,12">
+                                        <TextBlock Text="功能导航"
+                                                   Style="{StaticResource PanelTitleText}"
+                                                   FontSize="15" />
+                                        <TextBlock Text="Port Checker"
+                                                   Foreground="{DynamicResource MutedBrush}"
+                                                   FontSize="12"
+                                                   Margin="0,4,0,0" />
+                                    </StackPanel>
+
+                                    <StackPanel x:Name="HeaderPanel"
+                                                Grid.Row="1"
+                                                IsItemsHost="True"
+                                                KeyboardNavigation.TabIndex="1"
+                                                Panel.ZIndex="1" />
+                                </Grid>
+                            </Border>
+
                             <ContentPresenter x:Name="PART_SelectedContentHost"
-                                              Grid.Row="1"
+                                              Grid.Column="2"
                                               ContentSource="SelectedContent"
                                               KeyboardNavigation.DirectionalNavigation="Contained"
                                               KeyboardNavigation.TabIndex="2"
@@ -749,8 +777,10 @@
             <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
-            <Setter Property="Padding" Value="14,8" />
-            <Setter Property="Margin" Value="0,0,8,8" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="MinHeight" Value="42" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="Margin" Value="0,0,0,8" />
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
             <Setter Property="Template">
                 <Setter.Value>
@@ -763,7 +793,7 @@
                                 Padding="{TemplateBinding Padding}"
                                 SnapsToDevicePixels="True">
                             <ContentPresenter ContentSource="Header"
-                                              HorizontalAlignment="Center"
+                                              HorizontalAlignment="Left"
                                               RecognizesAccessKey="True"
                                               VerticalAlignment="Center" />
                         </Border>
@@ -999,7 +1029,30 @@
         </Grid>
 
         <TabControl Grid.Row="1" Margin="0,0,0,12">
-            <TabItem Header="普通端口">
+            <TabItem AutomationProperties.Name="普通端口占用查询">
+                <TabItem.Header>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="28" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="&#xECA5;"
+                                   Style="{StaticResource IconGlyph}"
+                                   Foreground="{DynamicResource AccentBrush}"
+                                   VerticalAlignment="Top"
+                                   Margin="0,1,0,0" />
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="普通端口占用查询"
+                                       FontWeight="SemiBold"
+                                       TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="TCP/UDP 占用与进程详情"
+                                       Foreground="{DynamicResource MutedBrush}"
+                                       FontSize="12"
+                                       Margin="0,3,0,0"
+                                       TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </Grid>
+                </TabItem.Header>
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -1480,8 +1533,31 @@
                 </Grid>
             </TabItem>
 
-            <TabItem Header="保留端口">
-                <Grid Margin="0,12,0,0">
+            <TabItem AutomationProperties.Name="保留端口相关">
+                <TabItem.Header>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="28" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="&#xE8C8;"
+                                   Style="{StaticResource IconGlyph}"
+                                   Foreground="{DynamicResource AccentBrush}"
+                                   VerticalAlignment="Top"
+                                   Margin="0,1,0,0" />
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="保留端口相关"
+                                       FontWeight="SemiBold"
+                                       TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="查看、添加和删除保留范围"
+                                       Foreground="{DynamicResource MutedBrush}"
+                                       FontSize="12"
+                                       Margin="0,3,0,0"
+                                       TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </Grid>
+                </TabItem.Header>
+                <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1.05*" />
                         <ColumnDefinition Width="16" />
@@ -1678,8 +1754,31 @@
                 </Grid>
             </TabItem>
 
-            <TabItem Header="动态端口">
-                <Grid Margin="0,12,0,0">
+            <TabItem AutomationProperties.Name="动态端口相关">
+                <TabItem.Header>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="28" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="&#xE895;"
+                                   Style="{StaticResource IconGlyph}"
+                                   Foreground="{DynamicResource AccentBrush}"
+                                   VerticalAlignment="Top"
+                                   Margin="0,1,0,0" />
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="动态端口相关"
+                                       FontWeight="SemiBold"
+                                       TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="查看和设置系统动态范围"
+                                       Foreground="{DynamicResource MutedBrush}"
+                                       FontSize="12"
+                                       Margin="0,3,0,0"
+                                       TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </Grid>
+                </TabItem.Header>
+                <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1.05*" />
                         <ColumnDefinition Width="16" />
