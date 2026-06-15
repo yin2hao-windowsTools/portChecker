@@ -60,10 +60,17 @@ public partial class MainWindow : Window
         SetBrush("PanelBrush", palette.Panel);
         SetBrush("PanelAltBrush", palette.PanelAlt);
         SetBrush("ControlBrush", palette.Control);
+        SetBrush("ControlHoverBrush", palette.ControlHover);
+        SetBrush("ControlPressedBrush", palette.ControlPressed);
+        SetBrush("ControlDisabledBrush", palette.ControlDisabled);
+        SetBrush("ControlDisabledTextBrush", palette.ControlDisabledText);
         SetBrush("SecondaryButtonHoverBrush", palette.SecondaryButtonHover);
         SetBrush("DataGridHeaderBrush", palette.DataGridHeader);
         SetBrush("DataGridAltRowBrush", palette.DataGridAltRow);
         SetBrush("RowBorderBrush", palette.RowBorder);
+        SetBrush("ScrollBarTrackBrush", palette.ScrollBarTrack);
+        SetBrush("ScrollBarThumbBrush", palette.ScrollBarThumb);
+        SetBrush("ScrollBarThumbHoverBrush", palette.ScrollBarThumbHover);
         SetBrush("PermissionPanelBrush", palette.PermissionPanel);
         SetBrush("PermissionBorderBrush", palette.PermissionBorder);
         SetBrush("BadgeBrush", palette.Badge);
@@ -82,6 +89,7 @@ public partial class MainWindow : Window
         SetBrush("SuccessSoftBrush", palette.SuccessSoft);
         SetBrush("WarningBrush", palette.Warning);
         SetBrush("WarningSoftBrush", palette.WarningSoft);
+        SetSystemBrushes(palette);
 
         Background = (Brush)Resources["WindowBackgroundBrush"];
         ApplyWindowChromeTheme(isDarkMode);
@@ -90,6 +98,29 @@ public partial class MainWindow : Window
     private void SetBrush(string resourceKey, Color color)
     {
         Resources[resourceKey] = new SolidColorBrush(color);
+    }
+
+    private void SetSystemBrushes(ThemePalette palette)
+    {
+        Resources[SystemColors.ControlBrushKey] = new SolidColorBrush(palette.Control);
+        Resources[SystemColors.ControlTextBrushKey] = new SolidColorBrush(palette.Ink);
+        Resources[SystemColors.WindowBrushKey] = new SolidColorBrush(palette.Panel);
+        Resources[SystemColors.WindowTextBrushKey] = new SolidColorBrush(palette.Ink);
+        Resources[SystemColors.InfoBrushKey] = new SolidColorBrush(palette.Panel);
+        Resources[SystemColors.InfoTextBrushKey] = new SolidColorBrush(palette.Ink);
+        Resources[SystemColors.MenuBrushKey] = new SolidColorBrush(palette.Panel);
+        Resources[SystemColors.MenuTextBrushKey] = new SolidColorBrush(palette.Ink);
+        Resources[SystemColors.MenuBarBrushKey] = new SolidColorBrush(palette.Panel);
+        Resources[SystemColors.MenuHighlightBrushKey] = new SolidColorBrush(palette.Selected);
+        Resources[SystemColors.HighlightBrushKey] = new SolidColorBrush(palette.Selected);
+        Resources[SystemColors.HighlightTextBrushKey] = new SolidColorBrush(palette.Ink);
+        Resources[SystemColors.InactiveSelectionHighlightBrushKey] = new SolidColorBrush(palette.Selected);
+        Resources[SystemColors.InactiveSelectionHighlightTextBrushKey] = new SolidColorBrush(palette.Ink);
+        Resources[SystemColors.GrayTextBrushKey] = new SolidColorBrush(palette.ControlDisabledText);
+        Resources[SystemColors.ControlLightBrushKey] = new SolidColorBrush(palette.Line);
+        Resources[SystemColors.ControlLightLightBrushKey] = new SolidColorBrush(palette.Panel);
+        Resources[SystemColors.ControlDarkBrushKey] = new SolidColorBrush(palette.Subtle);
+        Resources[SystemColors.ControlDarkDarkBrushKey] = new SolidColorBrush(palette.Muted);
     }
 
     private void ApplyWindowChromeTheme(bool isDarkMode)
@@ -120,10 +151,17 @@ public partial class MainWindow : Window
         Color Panel,
         Color PanelAlt,
         Color Control,
+        Color ControlHover,
+        Color ControlPressed,
+        Color ControlDisabled,
+        Color ControlDisabledText,
         Color SecondaryButtonHover,
         Color DataGridHeader,
         Color DataGridAltRow,
         Color RowBorder,
+        Color ScrollBarTrack,
+        Color ScrollBarThumb,
+        Color ScrollBarThumbHover,
         Color PermissionPanel,
         Color PermissionBorder,
         Color Badge,
@@ -153,9 +191,16 @@ public partial class MainWindow : Window
             Color.FromRgb(0xF8, 0xFA, 0xFD),
             Color.FromRgb(0xFD, 0xFE, 0xFF),
             Color.FromRgb(0xF3, 0xF7, 0xFD),
+            Color.FromRgb(0xEA, 0xF2, 0xFF),
+            Color.FromRgb(0xEE, 0xF2, 0xF7),
+            Color.FromRgb(0x98, 0xA2, 0xB3),
+            Color.FromRgb(0xF3, 0xF7, 0xFD),
             Color.FromRgb(0xF6, 0xF9, 0xFD),
             Color.FromRgb(0xFB, 0xFC, 0xFE),
             Color.FromRgb(0xEE, 0xF2, 0xF7),
+            Color.FromRgb(0xEE, 0xF2, 0xF7),
+            Color.FromRgb(0xCB, 0xD5, 0xE1),
+            Color.FromRgb(0x94, 0xA3, 0xB8),
             Color.FromRgb(0xF8, 0xFB, 0xFF),
             Color.FromRgb(0xCF, 0xE0, 0xFF),
             Color.FromRgb(0xEA, 0xF2, 0xFF),
@@ -184,10 +229,17 @@ public partial class MainWindow : Window
             Color.FromRgb(0x10, 0x18, 0x22),
             Color.FromRgb(0x0D, 0x15, 0x1E),
             Color.FromRgb(0x0C, 0x14, 0x1D),
+            Color.FromRgb(0x16, 0x22, 0x30),
+            Color.FromRgb(0x17, 0x34, 0x5A),
+            Color.FromRgb(0x14, 0x1F, 0x2C),
+            Color.FromRgb(0x73, 0x80, 0x93),
             Color.FromRgb(0x17, 0x23, 0x31),
             Color.FromRgb(0x17, 0x20, 0x2B),
             Color.FromRgb(0x0E, 0x16, 0x20),
             Color.FromRgb(0x20, 0x2C, 0x3B),
+            Color.FromRgb(0x10, 0x18, 0x22),
+            Color.FromRgb(0x34, 0x45, 0x59),
+            Color.FromRgb(0x52, 0x64, 0x7A),
             Color.FromRgb(0x0F, 0x18, 0x24),
             Color.FromRgb(0x25, 0x37, 0x4D),
             Color.FromRgb(0x12, 0x35, 0x61),
