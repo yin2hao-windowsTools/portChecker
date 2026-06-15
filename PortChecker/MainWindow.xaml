@@ -154,6 +154,80 @@
             </Style.Triggers>
         </Style>
 
+        <Style x:Key="HeaderPopupToggleButton" TargetType="ToggleButton">
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="Padding" Value="16,7" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+            <Setter Property="Background" Value="{DynamicResource PanelBrush}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource SecondaryButtonHoverBrush}" />
+                </Trigger>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource SelectedBrush}" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="HeaderPopupMenuItemButton" TargetType="Button">
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="Padding" Value="12,7" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource SelectedBrush}" />
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Foreground" Value="{DynamicResource ControlDisabledTextBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <Style x:Key="HeaderMenu" TargetType="Menu">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
@@ -855,17 +929,50 @@
                     </StackPanel>
                 </Button>
 
-                <Menu Style="{StaticResource HeaderMenu}" Margin="0,0,10,0">
-                    <MenuItem Header="更多" Style="{StaticResource HeaderMenuItem}">
-                        <MenuItem Header="关于 Port Checker" Command="{Binding ShowAboutCommand}" />
-                        <MenuItem Header="检查更新" Command="{Binding CheckForUpdatesCommand}" />
-                        <Separator />
-                        <MenuItem Header="开发者主页" Command="{Binding OpenDeveloperHomeCommand}" />
-                        <MenuItem Header="项目仓库" Command="{Binding OpenRepositoryCommand}" />
-                        <Separator />
-                        <MenuItem Header="许可证" Command="{Binding ShowLicenseCommand}" />
-                    </MenuItem>
-                </Menu>
+                <Grid Margin="0,0,10,0">
+                    <ToggleButton x:Name="MoreMenuButton"
+                                  Content="更多"
+                                  Style="{StaticResource HeaderPopupToggleButton}" />
+                    <Popup AllowsTransparency="True"
+                           Focusable="False"
+                           IsOpen="{Binding IsChecked, ElementName=MoreMenuButton, Mode=TwoWay}"
+                           Placement="Bottom"
+                           PlacementTarget="{Binding ElementName=MoreMenuButton}"
+                           PopupAnimation="Fade"
+                           StaysOpen="False">
+                        <Border Background="{DynamicResource PanelBrush}"
+                                BorderBrush="{DynamicResource LineBrush}"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                MinWidth="184"
+                                Padding="4"
+                                SnapsToDevicePixels="True">
+                            <StackPanel>
+                                <Button Content="关于 Port Checker"
+                                        Command="{Binding ShowAboutCommand}"
+                                        Style="{StaticResource HeaderPopupMenuItemButton}" />
+                                <Button Content="检查更新"
+                                        Command="{Binding CheckForUpdatesCommand}"
+                                        Style="{StaticResource HeaderPopupMenuItemButton}" />
+                                <Border Height="1"
+                                        Margin="8,4"
+                                        Background="{DynamicResource LineBrush}" />
+                                <Button Content="开发者主页"
+                                        Command="{Binding OpenDeveloperHomeCommand}"
+                                        Style="{StaticResource HeaderPopupMenuItemButton}" />
+                                <Button Content="项目仓库"
+                                        Command="{Binding OpenRepositoryCommand}"
+                                        Style="{StaticResource HeaderPopupMenuItemButton}" />
+                                <Border Height="1"
+                                        Margin="8,4"
+                                        Background="{DynamicResource LineBrush}" />
+                                <Button Content="许可证"
+                                        Command="{Binding ShowLicenseCommand}"
+                                        Style="{StaticResource HeaderPopupMenuItemButton}" />
+                            </StackPanel>
+                        </Border>
+                    </Popup>
+                </Grid>
 
                 <Button Command="{Binding OpenTaskManagerCommand}"
                         Style="{StaticResource SecondaryButton}"
