@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -29,6 +30,8 @@ internal sealed class MainViewModel : ObservableObject
     private CancellationTokenSource? _dynamicPortRefreshCancellation;
     private string _searchText = string.Empty;
     private string _searchKeyword = string.Empty;
+    private string _reservedPortSearchText = string.Empty;
+    private string _reservedPortSearchKeyword = string.Empty;
     private string _protocolFilter = "全部";
     private string _stateFilter = "全部";
     private PortEntry? _selectedPort;
@@ -81,6 +84,9 @@ internal sealed class MainViewModel : ObservableObject
         PortsView.Filter = FilterPort;
         PortsView.SortDescriptions.Add(new SortDescription(nameof(PortEntry.LocalPort), ListSortDirection.Ascending));
 
+        ReservedPortRangesView = CollectionViewSource.GetDefaultView(_reservedPortRanges);
+        ReservedPortRangesView.Filter = FilterReservedPortRange;
+
         RefreshCommand = new AsyncRelayCommand(RefreshAsync, () => !IsRefreshing);
         RefreshReservedPortsCommand = new AsyncRelayCommand(RefreshReservedPortsAsync, () => !IsRefreshingReservedPorts);
         AddReservedPortRangeCommand = new AsyncRelayCommand(AddReservedPortRangeAsync, () => CanAddReservedPortRange);
@@ -98,10 +104,16 @@ internal sealed class MainViewModel : ObservableObject
         ShowAboutCommand = new RelayCommand(ShowAbout);
         ShowLicenseCommand = new RelayCommand(ShowLicense);
         ClearSearchCommand = new RelayCommand(() => SearchText = string.Empty, () => !string.IsNullOrWhiteSpace(SearchText));
+        SearchReservedPortsCommand = new RelayCommand(SearchReservedPorts);
+        ClearReservedPortSearchCommand = new RelayCommand(
+            ClearReservedPortSearch,
+            () => !string.IsNullOrWhiteSpace(ReservedPortSearchText) || !string.IsNullOrWhiteSpace(_reservedPortSearchKeyword));
         ToggleThemeCommand = new RelayCommand(() => IsDarkMode = !IsDarkMode);
     }
 
     public ICollectionView PortsView { get; }
+
+    public ICollectionView ReservedPortRangesView { get; }
 
     public IReadOnlyList<ReservedPortRange> ReservedPortRanges => _reservedPortRanges;
 
@@ -161,6 +173,10 @@ internal sealed class MainViewModel : ObservableObject
 
     public RelayCommand ClearSearchCommand { get; }
 
+    public RelayCommand SearchReservedPortsCommand { get; }
+
+    public RelayCommand ClearReservedPortSearchCommand { get; }
+
     public RelayCommand ToggleThemeCommand { get; }
 
     public string SearchText
@@ -181,6 +197,24 @@ internal sealed class MainViewModel : ObservableObject
                 }
 
                 _searchDebounceTimer.Start();
+            }
+        }
+    }
+
+    public string ReservedPortSearchText
+    {
+        get => _reservedPortSearchText;
+        set
+        {
+            if (SetProperty(ref _reservedPortSearchText, value ?? string.Empty))
+            {
+                ClearReservedPortSearchCommand.RaiseCanExecuteChanged();
+                if (string.IsNullOrWhiteSpace(_reservedPortSearchText)
+                    && !string.IsNullOrWhiteSpace(_reservedPortSearchKeyword))
+                {
+                    _reservedPortSearchKeyword = string.Empty;
+                    ApplyReservedPortFilter();
+                }
             }
         }
     }
@@ -605,6 +639,8 @@ internal sealed class MainViewModel : ObservableObject
 
     public int ReservedPortRangeCount => _reservedPortRanges.Count;
 
+    public int FilteredReservedPortRangeCount => ReservedPortRangesView.Cast<object>().Count();
+
     public int AdministeredReservedPortRangeCount => _reservedPortRanges.Count(range => range.IsAdministered);
 
     public int DynamicPortRangeCount => _dynamicPortRanges.Count;
@@ -726,8 +762,12 @@ internal sealed class MainViewModel : ObservableObject
             }
 
             var previousSelectedRange = SelectedReservedPortRange;
-            _reservedPortRanges.ReplaceAll(ranges);
-            SelectedReservedPortRange = FindMatchingReservedPortRange(previousSelectedRange) ?? _reservedPortRanges.FirstOrDefault();
+            using (ReservedPortRangesView.DeferRefresh())
+            {
+                _reservedPortRanges.ReplaceAll(ranges);
+            }
+
+            SelectVisibleReservedPortRange(FindMatchingReservedPortRange(previousSelectedRange));
             RaiseReservedPortProperties();
 
             ReservedPortStatusMessage = ranges.Count == 0
@@ -744,7 +784,11 @@ internal sealed class MainViewModel : ObservableObject
         catch (Exception exception)
         {
             ReservedPortStatusMessage = $"保留端口读取失败：{exception.Message}";
-            _reservedPortRanges.ReplaceAll([]);
+            using (ReservedPortRangesView.DeferRefresh())
+            {
+                _reservedPortRanges.ReplaceAll([]);
+            }
+
             SelectedReservedPortRange = null;
             RaiseReservedPortProperties();
         }
@@ -1453,6 +1497,36 @@ internal sealed class MainViewModel : ObservableObject
         return port.SearchIndex.Contains(_searchKeyword, StringComparison.OrdinalIgnoreCase);
     }
 
+    private bool FilterReservedPortRange(object item)
+    {
+        if (item is not ReservedPortRange range)
+        {
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(_reservedPortSearchKeyword))
+        {
+            return true;
+        }
+
+        var keyword = _reservedPortSearchKeyword;
+        if (int.TryParse(keyword, NumberStyles.None, CultureInfo.InvariantCulture, out var port)
+            && port >= range.StartPort
+            && port <= range.EndPort)
+        {
+            return true;
+        }
+
+        return range.ProtocolText.Contains(keyword, StringComparison.OrdinalIgnoreCase)
+            || range.RangeText.Contains(keyword, StringComparison.OrdinalIgnoreCase)
+            || range.StartPort.ToString(CultureInfo.InvariantCulture).Contains(keyword, StringComparison.OrdinalIgnoreCase)
+            || range.EndPort.ToString(CultureInfo.InvariantCulture).Contains(keyword, StringComparison.OrdinalIgnoreCase)
+            || range.PortCount.ToString(CultureInfo.InvariantCulture).Contains(keyword, StringComparison.OrdinalIgnoreCase)
+            || range.Store.Contains(keyword, StringComparison.OrdinalIgnoreCase)
+            || range.StoreText.Contains(keyword, StringComparison.OrdinalIgnoreCase)
+            || range.SourceText.Contains(keyword, StringComparison.OrdinalIgnoreCase);
+    }
+
     private bool CanControlService(object? parameter)
     {
         return !IsControllingService && parameter is ServiceInfo { CanControl: true, IsRunning: true };
@@ -1500,6 +1574,39 @@ internal sealed class MainViewModel : ObservableObject
         UpdateEmptyPortListMessage();
     }
 
+    private void SearchReservedPorts()
+    {
+        _reservedPortSearchKeyword = ReservedPortSearchText.Trim();
+        ApplyReservedPortFilter();
+    }
+
+    private void ClearReservedPortSearch()
+    {
+        if (string.IsNullOrWhiteSpace(ReservedPortSearchText)
+            && string.IsNullOrWhiteSpace(_reservedPortSearchKeyword))
+        {
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(ReservedPortSearchText))
+        {
+            ReservedPortSearchText = string.Empty;
+            return;
+        }
+
+        _reservedPortSearchKeyword = string.Empty;
+        ApplyReservedPortFilter();
+    }
+
+    private void ApplyReservedPortFilter()
+    {
+        ReservedPortRangesView.Refresh();
+        SelectVisibleReservedPortRange();
+        OnPropertyChanged(nameof(FilteredReservedPortRangeCount));
+        UpdateEmptyReservedPortMessage();
+        ClearReservedPortSearchCommand.RaiseCanExecuteChanged();
+    }
+
     private void UpdateEmptyPortListMessage()
     {
         EmptyPortListMessage = (IsRefreshing, _ports.Count, FilteredCount) switch
@@ -1513,10 +1620,11 @@ internal sealed class MainViewModel : ObservableObject
 
     private void UpdateEmptyReservedPortMessage()
     {
-        EmptyReservedPortMessage = (IsRefreshingReservedPorts, _reservedPortRanges.Count) switch
+        EmptyReservedPortMessage = (IsRefreshingReservedPorts, _reservedPortRanges.Count, FilteredReservedPortRangeCount) switch
         {
-            (true, _) => string.Empty,
-            (false, 0) => $"{GetStoreDisplayText(ReservedPortListStore)}保留端口为空，或当前权限无法读取。点击刷新可重新获取。",
+            (true, _, _) => string.Empty,
+            (false, 0, _) => $"{GetStoreDisplayText(ReservedPortListStore)}保留端口为空，或当前权限无法读取。点击刷新可重新获取。",
+            (false, > 0, 0) => "当前搜索没有匹配保留端口。清除搜索后再查看。",
             _ => string.Empty
         };
     }
@@ -1559,6 +1667,30 @@ internal sealed class MainViewModel : ObservableObject
             && candidate.StartPort == range.StartPort
             && candidate.EndPort == range.EndPort
             && candidate.Store.Equals(range.Store, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void SelectVisibleReservedPortRange(ReservedPortRange? preferredRange = null)
+    {
+        var targetRange = preferredRange ?? SelectedReservedPortRange;
+        ReservedPortRange? firstVisibleRange = null;
+        var targetRangeVisible = false;
+
+        foreach (var item in ReservedPortRangesView)
+        {
+            if (item is not ReservedPortRange range)
+            {
+                continue;
+            }
+
+            firstVisibleRange ??= range;
+            if (ReferenceEquals(range, targetRange))
+            {
+                targetRangeVisible = true;
+                break;
+            }
+        }
+
+        SelectedReservedPortRange = targetRangeVisible ? targetRange : firstVisibleRange;
     }
 
     private DynamicPortRange? FindMatchingDynamicPortRange(DynamicPortRange? range)
@@ -1679,6 +1811,7 @@ internal sealed class MainViewModel : ObservableObject
     private void RaiseReservedPortProperties()
     {
         OnPropertyChanged(nameof(ReservedPortRangeCount));
+        OnPropertyChanged(nameof(FilteredReservedPortRangeCount));
         OnPropertyChanged(nameof(AdministeredReservedPortRangeCount));
         OnPropertyChanged(nameof(CanAddReservedPortRange));
         OnPropertyChanged(nameof(CanDeleteReservedPortRange));
