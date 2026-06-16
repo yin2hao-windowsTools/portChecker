@@ -15,6 +15,7 @@ namespace PortChecker.Services;
 internal sealed class DynamicPortRangeService
 {
     private const string SetDynamicPortRangeArgument = "--set-dynamic-port-range";
+    private static readonly char[] NetshFieldSeparators = [':', '：'];
     private static readonly TimeSpan NetshTimeout = TimeSpan.FromSeconds(15);
     private static readonly TimeSpan ElevatedHelperTimeout = TimeSpan.FromSeconds(90);
 
@@ -142,24 +143,37 @@ internal sealed class DynamicPortRangeService
     {
         int? startPort = null;
         int? portCount = null;
+        var parsedFields = new List<(string Label, int Value)>();
 
         using var reader = new StringReader(output);
         while (reader.ReadLine() is { } line)
         {
             var trimmed = line.Trim();
-            if (trimmed.StartsWith("Start Port", StringComparison.OrdinalIgnoreCase))
+            if (!TryParseNetshField(trimmed, out var label, out var value))
             {
-                startPort = TryParseValueAfterColon(trimmed);
                 continue;
             }
 
-            if (trimmed.StartsWith("Number of Ports", StringComparison.OrdinalIgnoreCase))
+            parsedFields.Add((label, value));
+            if (IsStartPortLabel(label))
             {
-                portCount = TryParseValueAfterColon(trimmed);
+                startPort = value;
+                continue;
+            }
+
+            if (IsPortCountLabel(label))
+            {
+                portCount = value;
             }
         }
 
-        if (startPort is null || portCount is null)
+        if ((startPort is null || portCount is null) && parsedFields.Count >= 2)
+        {
+            startPort ??= parsedFields[0].Value;
+            portCount ??= parsedFields[1].Value;
+        }
+
+        if (startPort is null || portCount is null || !IsValidDynamicRange(startPort.Value, portCount.Value))
         {
             throw new InvalidOperationException("未能从 netsh 输出中解析动态端口范围。");
         }
@@ -356,18 +370,82 @@ internal sealed class DynamicPortRangeService
         return portCount;
     }
 
-    private static int? TryParseValueAfterColon(string line)
+    private static bool TryParseNetshField(string line, out string label, out int value)
     {
-        var index = line.IndexOf(':');
+        label = string.Empty;
+        value = 0;
+
+        var index = line.IndexOfAny(NetshFieldSeparators);
         if (index < 0)
         {
-            return null;
+            return false;
         }
 
-        var value = line[(index + 1)..].Trim();
-        return int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var parsed)
-            ? parsed
-            : null;
+        label = line[..index].Trim();
+        return TryParseFirstInteger(line[(index + 1)..], out value);
+    }
+
+    private static bool TryParseFirstInteger(string value, out int parsed)
+    {
+        parsed = 0;
+        for (var index = 0; index < value.Length; index++)
+        {
+            if (value[index] is not (>= '0' and <= '9'))
+            {
+                continue;
+            }
+
+            var startIndex = index;
+            while (index < value.Length && value[index] is >= '0' and <= '9')
+            {
+                index++;
+            }
+
+            return int.TryParse(value[startIndex..index], NumberStyles.None, CultureInfo.InvariantCulture, out parsed);
+        }
+
+        return false;
+    }
+
+    private static bool IsStartPortLabel(string label)
+    {
+        var normalizedLabel = NormalizeNetshLabel(label);
+        return normalizedLabel.Contains("startport", StringComparison.Ordinal)
+            || normalizedLabel.Contains("起始端口", StringComparison.Ordinal)
+            || normalizedLabel.Contains("开始端口", StringComparison.Ordinal)
+            || normalizedLabel.Contains("启动端口", StringComparison.Ordinal);
+    }
+
+    private static bool IsPortCountLabel(string label)
+    {
+        var normalizedLabel = NormalizeNetshLabel(label);
+        return normalizedLabel.Contains("numberofports", StringComparison.Ordinal)
+            || normalizedLabel.Contains("portcount", StringComparison.Ordinal)
+            || normalizedLabel.Contains("端口数", StringComparison.Ordinal)
+            || normalizedLabel.Contains("端口数量", StringComparison.Ordinal);
+    }
+
+    private static string NormalizeNetshLabel(string label)
+    {
+        var builder = new StringBuilder(label.Length);
+        foreach (var character in label)
+        {
+            if (char.IsWhiteSpace(character) || character is '-' or '_')
+            {
+                continue;
+            }
+
+            builder.Append(char.ToLowerInvariant(character));
+        }
+
+        return builder.ToString();
+    }
+
+    private static bool IsValidDynamicRange(int startPort, int portCount)
+    {
+        return IsValidPort(startPort)
+            && portCount > 0
+            && portCount <= 65536 - startPort;
     }
 
     private static void ValidateRange(string addressFamily, PortProtocol protocol, int startPort, int portCount, string store)
