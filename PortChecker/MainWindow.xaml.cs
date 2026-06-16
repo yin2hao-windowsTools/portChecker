@@ -64,8 +64,14 @@ public partial class MainWindow : Window
         SetBrush("ControlPressedBrush", palette.ControlPressed);
         SetBrush("ControlDisabledBrush", palette.ControlDisabled);
         SetBrush("ControlDisabledTextBrush", palette.ControlDisabledText);
+        SetBrush("CardPanelBrush", palette.CardPanel);
+        SetBrush("CardBorderBrush", palette.CardBorder);
+        SetBrush("ContentHoverBrush", palette.ContentHover);
+        SetBrush("ContentSelectedBrush", palette.ContentSelected);
+        SetBrush("ContentSelectedForegroundBrush", palette.ContentSelectedForeground);
         SetBrush("SecondaryButtonHoverBrush", palette.SecondaryButtonHover);
         SetBrush("DataGridHeaderBrush", palette.DataGridHeader);
+        SetBrush("DataGridHeaderTextBrush", palette.DataGridHeaderText);
         SetBrush("DataGridAltRowBrush", palette.DataGridAltRow);
         SetBrush("RowBorderBrush", palette.RowBorder);
         SetBrush("ScrollBarTrackBrush", palette.ScrollBarTrack);
@@ -74,7 +80,11 @@ public partial class MainWindow : Window
         SetBrush("PermissionPanelBrush", palette.PermissionPanel);
         SetBrush("PermissionBorderBrush", palette.PermissionBorder);
         SetBrush("BadgeBrush", palette.Badge);
+        SetBrush("BadgeTextBrush", palette.BadgeText);
         SetBrush("EmptyPanelBrush", palette.EmptyPanel);
+        SetBrush("EmptyStatePanelBrush", palette.EmptyStatePanel);
+        SetBrush("EmptyStateBorderBrush", palette.EmptyStateBorder);
+        SetBrush("EmptyStateTextBrush", palette.EmptyStateText);
         SetBrush("PlaceholderBrush", palette.Placeholder);
         SetBrush("WarningBorderBrush", palette.WarningBorder);
         SetBrush("WarningTextBrush", palette.WarningText);
@@ -170,8 +180,14 @@ public partial class MainWindow : Window
         Color ControlPressed,
         Color ControlDisabled,
         Color ControlDisabledText,
+        Color CardPanel,
+        Color CardBorder,
+        Color ContentHover,
+        Color ContentSelected,
+        Color ContentSelectedForeground,
         Color SecondaryButtonHover,
         Color DataGridHeader,
+        Color DataGridHeaderText,
         Color DataGridAltRow,
         Color RowBorder,
         Color ScrollBarTrack,
@@ -180,7 +196,11 @@ public partial class MainWindow : Window
         Color PermissionPanel,
         Color PermissionBorder,
         Color Badge,
+        Color BadgeText,
         Color EmptyPanel,
+        Color EmptyStatePanel,
+        Color EmptyStateBorder,
+        Color EmptyStateText,
         Color Placeholder,
         Color WarningBorder,
         Color WarningText,
@@ -224,8 +244,14 @@ public partial class MainWindow : Window
             Color.FromRgb(0xEA, 0xF2, 0xFF),
             Color.FromRgb(0xEE, 0xF2, 0xF7),
             Color.FromRgb(0x98, 0xA2, 0xB3),
+            Color.FromRgb(0xFF, 0xFF, 0xFF),
+            Color.FromRgb(0xDC, 0xE5, 0xF2),
+            Color.FromRgb(0xF2, 0xF7, 0xFF),
+            Color.FromRgb(0xEA, 0xF2, 0xFF),
+            Color.FromRgb(0x11, 0x18, 0x27),
             Color.FromRgb(0xF3, 0xF7, 0xFD),
             Color.FromRgb(0xF6, 0xF9, 0xFD),
+            Color.FromRgb(0x66, 0x70, 0x85),
             Color.FromRgb(0xFB, 0xFC, 0xFE),
             Color.FromRgb(0xEE, 0xF2, 0xF7),
             Color.FromRgb(0xEE, 0xF2, 0xF7),
@@ -234,7 +260,11 @@ public partial class MainWindow : Window
             Color.FromRgb(0xF8, 0xFB, 0xFF),
             Color.FromRgb(0xCF, 0xE0, 0xFF),
             Color.FromRgb(0xEA, 0xF2, 0xFF),
+            Color.FromRgb(0x25, 0x63, 0xEB),
             Color.FromRgb(0xF8, 0xFA, 0xFD),
+            Color.FromRgb(0xF8, 0xFA, 0xFD),
+            Color.FromRgb(0xCF, 0xE0, 0xFF),
+            Color.FromRgb(0x33, 0x41, 0x55),
             Color.FromRgb(0x8D, 0x98, 0xAA),
             Color.FromRgb(0xFE, 0xD7, 0xAA),
             Color.FromRgb(0x9A, 0x34, 0x12),
@@ -278,8 +308,14 @@ public partial class MainWindow : Window
             Color.FromRgb(0x17, 0x34, 0x5A),
             Color.FromRgb(0x14, 0x1F, 0x2C),
             Color.FromRgb(0x73, 0x80, 0x93),
+            Color.FromRgb(0x12, 0x1D, 0x2A),
+            Color.FromRgb(0x2A, 0x3A, 0x4F),
+            Color.FromRgb(0x16, 0x29, 0x3D),
+            Color.FromRgb(0x1D, 0x3B, 0x63),
+            Color.FromRgb(0xF8, 0xFA, 0xFC),
             Color.FromRgb(0x17, 0x23, 0x31),
             Color.FromRgb(0x17, 0x20, 0x2B),
+            Color.FromRgb(0xB6, 0xC2, 0xD1),
             Color.FromRgb(0x0E, 0x16, 0x20),
             Color.FromRgb(0x20, 0x2C, 0x3B),
             Color.FromRgb(0x10, 0x18, 0x22),
@@ -288,7 +324,11 @@ public partial class MainWindow : Window
             Color.FromRgb(0x0F, 0x18, 0x24),
             Color.FromRgb(0x25, 0x37, 0x4D),
             Color.FromRgb(0x12, 0x35, 0x61),
+            Color.FromRgb(0x93, 0xC5, 0xFD),
             Color.FromRgb(0x0F, 0x17, 0x21),
+            Color.FromRgb(0x13, 0x22, 0x31),
+            Color.FromRgb(0x2C, 0x45, 0x66),
+            Color.FromRgb(0xD2, 0xE3, 0xF6),
             Color.FromRgb(0x78, 0x86, 0x99),
             Color.FromRgb(0x92, 0x40, 0x0E),
             Color.FromRgb(0xFD, 0xBA, 0x74),

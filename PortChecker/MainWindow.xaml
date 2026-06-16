@@ -29,8 +29,14 @@
         <SolidColorBrush x:Key="ControlPressedBrush" Color="#EAF2FF" />
         <SolidColorBrush x:Key="ControlDisabledBrush" Color="#EEF2F7" />
         <SolidColorBrush x:Key="ControlDisabledTextBrush" Color="#98A2B3" />
+        <SolidColorBrush x:Key="CardPanelBrush" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="CardBorderBrush" Color="#DCE5F2" />
+        <SolidColorBrush x:Key="ContentHoverBrush" Color="#F2F7FF" />
+        <SolidColorBrush x:Key="ContentSelectedBrush" Color="#EAF2FF" />
+        <SolidColorBrush x:Key="ContentSelectedForegroundBrush" Color="#111827" />
         <SolidColorBrush x:Key="SecondaryButtonHoverBrush" Color="#F3F7FD" />
         <SolidColorBrush x:Key="DataGridHeaderBrush" Color="#F6F9FD" />
+        <SolidColorBrush x:Key="DataGridHeaderTextBrush" Color="#667085" />
         <SolidColorBrush x:Key="DataGridAltRowBrush" Color="#FBFCFE" />
         <SolidColorBrush x:Key="RowBorderBrush" Color="#EEF2F7" />
         <SolidColorBrush x:Key="ScrollBarTrackBrush" Color="#EEF2F7" />
@@ -39,7 +45,11 @@
         <SolidColorBrush x:Key="PermissionPanelBrush" Color="#F8FBFF" />
         <SolidColorBrush x:Key="PermissionBorderBrush" Color="#CFE0FF" />
         <SolidColorBrush x:Key="BadgeBrush" Color="#EAF2FF" />
+        <SolidColorBrush x:Key="BadgeTextBrush" Color="#2563EB" />
         <SolidColorBrush x:Key="EmptyPanelBrush" Color="#F8FAFD" />
+        <SolidColorBrush x:Key="EmptyStatePanelBrush" Color="#F8FAFD" />
+        <SolidColorBrush x:Key="EmptyStateBorderBrush" Color="#CFE0FF" />
+        <SolidColorBrush x:Key="EmptyStateTextBrush" Color="#334155" />
         <SolidColorBrush x:Key="PlaceholderBrush" Color="#8D98AA" />
         <SolidColorBrush x:Key="WarningBorderBrush" Color="#FED7AA" />
         <SolidColorBrush x:Key="WarningTextBrush" Color="#9A3412" />
@@ -100,8 +110,8 @@
         </LinearGradientBrush>
 
         <Style x:Key="CardBorder" TargetType="Border">
-            <Setter Property="Background" Value="{DynamicResource PanelBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
+            <Setter Property="Background" Value="{DynamicResource CardPanelBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Padding" Value="16" />
@@ -867,7 +877,7 @@
 
         <Style TargetType="DataGridColumnHeader">
             <Setter Property="Background" Value="{DynamicResource DataGridHeaderBrush}" />
-            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource DataGridHeaderTextBrush}" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
             <Setter Property="BorderThickness" Value="0,0,0,1" />
@@ -896,8 +906,8 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource SelectedBrush}" />
-                    <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource ContentSelectedBrush}" />
+                    <Setter Property="Foreground" Value="{DynamicResource ContentSelectedForegroundBrush}" />
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -909,10 +919,10 @@
             <Setter Property="SnapsToDevicePixels" Value="True" />
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource ContentHoverBrush}" />
                 </Trigger>
                 <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource SelectedBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource ContentSelectedBrush}" />
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -1304,7 +1314,7 @@
                                                 Padding="7,3"
                                                 HorizontalAlignment="Left">
                                             <TextBlock Text="{Binding ProtocolText}"
-                                                       Foreground="{DynamicResource AccentBrush}"
+                                                       Foreground="{DynamicResource BadgeTextBrush}"
                                                        FontWeight="SemiBold"
                                                        FontSize="12" />
                                         </Border>
@@ -1339,8 +1349,8 @@
                     </DataGrid>
 
                     <Border Grid.Row="1"
-                            Background="{DynamicResource EmptyPanelBrush}"
-                            BorderBrush="{DynamicResource LineBrush}"
+                            Background="{DynamicResource EmptyStatePanelBrush}"
+                            BorderBrush="{DynamicResource EmptyStateBorderBrush}"
                             BorderThickness="1"
                             CornerRadius="6"
                             Padding="18"
@@ -1348,7 +1358,7 @@
                             VerticalAlignment="Center"
                             Visibility="{Binding EmptyPortListMessage, Converter={StaticResource StringToVisibilityConverter}}">
                         <TextBlock Text="{Binding EmptyPortListMessage}"
-                                   Foreground="{DynamicResource MutedBrush}"
+                                   Foreground="{DynamicResource EmptyStateTextBrush}"
                                    FontWeight="SemiBold"
                                    TextAlignment="Center"
                                    TextWrapping="Wrap" />
@@ -1385,7 +1395,7 @@
                                 Padding="10,5"
                                 VerticalAlignment="Top">
                             <TextBlock Text="{Binding SelectedPort.ProtocolText, TargetNullValue=--}"
-                                       Foreground="{DynamicResource AccentBrush}"
+                                       Foreground="{DynamicResource BadgeTextBrush}"
                                        FontWeight="SemiBold" />
                         </Border>
                     </Grid>
@@ -1621,8 +1631,8 @@
                                     </DataGrid.Columns>
                                 </DataGrid>
 
-                                <Border Background="{DynamicResource EmptyPanelBrush}"
-                                        BorderBrush="{DynamicResource LineBrush}"
+                                <Border Background="{DynamicResource EmptyStatePanelBrush}"
+                                        BorderBrush="{DynamicResource EmptyStateBorderBrush}"
                                         BorderThickness="1"
                                         CornerRadius="6"
                                         Padding="14"
@@ -1630,7 +1640,7 @@
                                         VerticalAlignment="Center"
                                         Visibility="{Binding EmptyReservedPortMessage, Converter={StaticResource StringToVisibilityConverter}}">
                                     <TextBlock Text="{Binding EmptyReservedPortMessage}"
-                                               Foreground="{DynamicResource MutedBrush}"
+                                               Foreground="{DynamicResource EmptyStateTextBrush}"
                                                FontWeight="SemiBold"
                                                TextAlignment="Center"
                                                TextWrapping="Wrap" />
@@ -1843,8 +1853,8 @@
                                     </DataGrid.Columns>
                                 </DataGrid>
 
-                                <Border Background="{DynamicResource EmptyPanelBrush}"
-                                        BorderBrush="{DynamicResource LineBrush}"
+                                <Border Background="{DynamicResource EmptyStatePanelBrush}"
+                                        BorderBrush="{DynamicResource EmptyStateBorderBrush}"
                                         BorderThickness="1"
                                         CornerRadius="6"
                                         Padding="14"
@@ -1852,7 +1862,7 @@
                                         VerticalAlignment="Center"
                                         Visibility="{Binding EmptyDynamicPortMessage, Converter={StaticResource StringToVisibilityConverter}}">
                                     <TextBlock Text="{Binding EmptyDynamicPortMessage}"
-                                               Foreground="{DynamicResource MutedBrush}"
+                                               Foreground="{DynamicResource EmptyStateTextBrush}"
                                                FontWeight="SemiBold"
                                                TextAlignment="Center"
                                                TextWrapping="Wrap" />
