@@ -1008,8 +1008,8 @@
                            PlacementTarget="{Binding ElementName=MoreMenuButton}"
                            PopupAnimation="Fade"
                            StaysOpen="False">
-                        <Border Background="{DynamicResource PanelBrush}"
-                                BorderBrush="{DynamicResource LineBrush}"
+                        <Border Background="{DynamicResource PopupPanelBrush}"
+                                BorderBrush="{DynamicResource PopupBorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="6"
                                 MinWidth="184"
