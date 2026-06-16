@@ -49,6 +49,21 @@
         <SolidColorBrush x:Key="DangerHoverBrush" Color="#B91C1C" />
         <SolidColorBrush x:Key="HoverBrush" Color="#F2F7FF" />
         <SolidColorBrush x:Key="SelectedBrush" Color="#EAF2FF" />
+        <SolidColorBrush x:Key="NavigationPanelBrush" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="NavigationItemBrush" Color="#FDFEFF" />
+        <SolidColorBrush x:Key="NavigationItemHoverBrush" Color="#F3F7FD" />
+        <SolidColorBrush x:Key="NavigationItemSelectedBrush" Color="#EAF2FF" />
+        <SolidColorBrush x:Key="NavigationItemBorderBrush" Color="#DCE5F2" />
+        <SolidColorBrush x:Key="NavigationItemSelectedBorderBrush" Color="#2563EB" />
+        <SolidColorBrush x:Key="NavigationItemForegroundBrush" Color="#111827" />
+        <SolidColorBrush x:Key="NavigationItemSubtextBrush" Color="#667085" />
+        <SolidColorBrush x:Key="NavigationItemSelectedForegroundBrush" Color="#0F172A" />
+        <SolidColorBrush x:Key="NavigationItemSelectedSubtextBrush" Color="#334155" />
+        <SolidColorBrush x:Key="NavigationSelectionIndicatorBrush" Color="#2563EB" />
+        <SolidColorBrush x:Key="PopupPanelBrush" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="PopupBorderBrush" Color="#CBD8EA" />
+        <SolidColorBrush x:Key="PopupHoverBrush" Color="#F3F7FD" />
+        <SolidColorBrush x:Key="PopupPressedBrush" Color="#EAF2FF" />
         <SolidColorBrush x:Key="AccentBrush" Color="#2563EB" />
         <SolidColorBrush x:Key="AccentDarkBrush" Color="#1D4ED8" />
         <SolidColorBrush x:Key="AccentSoftBrush" Color="#EEF5FF" />
@@ -180,10 +195,10 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource SecondaryButtonHoverBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource PopupHoverBrush}" />
                 </Trigger>
                 <Trigger Property="IsChecked" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource SelectedBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource PopupPressedBrush}" />
                     <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
                 </Trigger>
             </Style.Triggers>
@@ -217,10 +232,10 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource PopupHoverBrush}" />
                 </Trigger>
                 <Trigger Property="IsPressed" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource SelectedBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource PopupPressedBrush}" />
                 </Trigger>
                 <Trigger Property="IsEnabled" Value="False">
                     <Setter Property="Foreground" Value="{DynamicResource ControlDisabledTextBrush}" />
@@ -254,8 +269,8 @@
                        IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
                        Placement="Bottom"
                        PopupAnimation="Fade">
-                    <Border Background="{DynamicResource PanelBrush}"
-                            BorderBrush="{DynamicResource LineBrush}"
+                    <Border Background="{DynamicResource PopupPanelBrush}"
+                            BorderBrush="{DynamicResource PopupBorderBrush}"
                             BorderThickness="1"
                             MinWidth="156"
                             Padding="3"
@@ -277,11 +292,11 @@
                     <Setter TargetName="PART_Popup" Property="Placement" Value="Right" />
                 </Trigger>
                 <Trigger Property="IsHighlighted" Value="True">
-                    <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource HoverBrush}" />
+                    <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource PopupHoverBrush}" />
                     <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
                 </Trigger>
                 <Trigger Property="IsSubmenuOpen" Value="True">
-                    <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource SelectedBrush}" />
+                    <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource PopupPressedBrush}" />
                     <Setter TargetName="ItemBorder" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
                     <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
                 </Trigger>
@@ -730,7 +745,7 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
-                            <Border Background="{DynamicResource PanelBrush}"
+                            <Border Background="{DynamicResource NavigationPanelBrush}"
                                     BorderBrush="{DynamicResource LineBrush}"
                                     BorderThickness="1"
                                     CornerRadius="8"
@@ -773,10 +788,11 @@
         </Style>
 
         <Style TargetType="TabItem">
-            <Setter Property="Background" Value="{DynamicResource ControlBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
+            <Setter Property="Background" Value="{DynamicResource NavigationItemBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource NavigationItemBorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource NavigationItemForegroundBrush}" />
+            <Setter Property="Tag" Value="{DynamicResource NavigationItemSubtextBrush}" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="MinHeight" Value="42" />
             <Setter Property="Padding" Value="12,10" />
@@ -785,27 +801,39 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TabItem">
-                        <Border x:Name="TabBorder"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="6"
-                                Padding="{TemplateBinding Padding}"
-                                SnapsToDevicePixels="True">
-                            <ContentPresenter ContentSource="Header"
-                                              HorizontalAlignment="Left"
-                                              RecognizesAccessKey="True"
-                                              VerticalAlignment="Center" />
-                        </Border>
+                        <Grid>
+                            <Border x:Name="TabBorder"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="6"
+                                    Padding="{TemplateBinding Padding}"
+                                    SnapsToDevicePixels="True">
+                                <ContentPresenter ContentSource="Header"
+                                                  HorizontalAlignment="Left"
+                                                  RecognizesAccessKey="True"
+                                                  VerticalAlignment="Center" />
+                            </Border>
+                            <Border x:Name="SelectionIndicator"
+                                    Width="3"
+                                    Margin="6,8,0,8"
+                                    HorizontalAlignment="Left"
+                                    Background="{DynamicResource NavigationSelectionIndicatorBrush}"
+                                    CornerRadius="2"
+                                    Opacity="0" />
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource ControlHoverBrush}" />
+                                <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource NavigationItemHoverBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource NavigationItemForegroundBrush}" />
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="{DynamicResource SelectedBrush}" />
-                                <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-                                <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+                                <Setter Property="Background" Value="{DynamicResource NavigationItemSelectedBrush}" />
+                                <Setter Property="BorderBrush" Value="{DynamicResource NavigationItemSelectedBorderBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource NavigationItemSelectedForegroundBrush}" />
+                                <Setter Property="Tag" Value="{DynamicResource NavigationItemSelectedSubtextBrush}" />
                                 <Setter Property="FontWeight" Value="SemiBold" />
+                                <Setter TargetName="SelectionIndicator" Property="Opacity" Value="1" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Foreground" Value="{DynamicResource ControlDisabledTextBrush}" />
@@ -1043,10 +1071,11 @@
                                    Margin="0,1,0,0" />
                         <StackPanel Grid.Column="1">
                             <TextBlock Text="普通端口占用查询"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"
                                        FontWeight="SemiBold"
                                        TextTrimming="CharacterEllipsis" />
                             <TextBlock Text="TCP/UDP 占用与进程详情"
-                                       Foreground="{DynamicResource MutedBrush}"
+                                       Foreground="{Binding Tag, RelativeSource={RelativeSource AncestorType=TabItem}}"
                                        FontSize="12"
                                        Margin="0,3,0,0"
                                        TextTrimming="CharacterEllipsis" />
@@ -1547,10 +1576,11 @@
                                    Margin="0,1,0,0" />
                         <StackPanel Grid.Column="1">
                             <TextBlock Text="保留端口相关"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"
                                        FontWeight="SemiBold"
                                        TextTrimming="CharacterEllipsis" />
                             <TextBlock Text="查看、添加和删除保留范围"
-                                       Foreground="{DynamicResource MutedBrush}"
+                                       Foreground="{Binding Tag, RelativeSource={RelativeSource AncestorType=TabItem}}"
                                        FontSize="12"
                                        Margin="0,3,0,0"
                                        TextTrimming="CharacterEllipsis" />
@@ -1768,10 +1798,11 @@
                                    Margin="0,1,0,0" />
                         <StackPanel Grid.Column="1">
                             <TextBlock Text="动态端口相关"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"
                                        FontWeight="SemiBold"
                                        TextTrimming="CharacterEllipsis" />
                             <TextBlock Text="查看和设置系统动态范围"
-                                       Foreground="{DynamicResource MutedBrush}"
+                                       Foreground="{Binding Tag, RelativeSource={RelativeSource AncestorType=TabItem}}"
                                        FontSize="12"
                                        Margin="0,3,0,0"
                                        TextTrimming="CharacterEllipsis" />

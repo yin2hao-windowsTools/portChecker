@@ -84,6 +84,21 @@ public partial class MainWindow : Window
         SetBrush("DangerHoverBrush", palette.DangerHover);
         SetBrush("HoverBrush", palette.Hover);
         SetBrush("SelectedBrush", palette.Selected);
+        SetBrush("NavigationPanelBrush", palette.NavigationPanel);
+        SetBrush("NavigationItemBrush", palette.NavigationItem);
+        SetBrush("NavigationItemHoverBrush", palette.NavigationItemHover);
+        SetBrush("NavigationItemSelectedBrush", palette.NavigationItemSelected);
+        SetBrush("NavigationItemBorderBrush", palette.NavigationItemBorder);
+        SetBrush("NavigationItemSelectedBorderBrush", palette.NavigationItemSelectedBorder);
+        SetBrush("NavigationItemForegroundBrush", palette.NavigationItemForeground);
+        SetBrush("NavigationItemSubtextBrush", palette.NavigationItemSubtext);
+        SetBrush("NavigationItemSelectedForegroundBrush", palette.NavigationItemSelectedForeground);
+        SetBrush("NavigationItemSelectedSubtextBrush", palette.NavigationItemSelectedSubtext);
+        SetBrush("NavigationSelectionIndicatorBrush", palette.NavigationSelectionIndicator);
+        SetBrush("PopupPanelBrush", palette.PopupPanel);
+        SetBrush("PopupBorderBrush", palette.PopupBorder);
+        SetBrush("PopupHoverBrush", palette.PopupHover);
+        SetBrush("PopupPressedBrush", palette.PopupPressed);
         SetBrush("AccentSoftBrush", palette.AccentSoft);
         SetBrush("SuccessBrush", palette.Success);
         SetBrush("SuccessSoftBrush", palette.SuccessSoft);
@@ -175,6 +190,21 @@ public partial class MainWindow : Window
         Color DangerHover,
         Color Hover,
         Color Selected,
+        Color NavigationPanel,
+        Color NavigationItem,
+        Color NavigationItemHover,
+        Color NavigationItemSelected,
+        Color NavigationItemBorder,
+        Color NavigationItemSelectedBorder,
+        Color NavigationItemForeground,
+        Color NavigationItemSubtext,
+        Color NavigationItemSelectedForeground,
+        Color NavigationItemSelectedSubtext,
+        Color NavigationSelectionIndicator,
+        Color PopupPanel,
+        Color PopupBorder,
+        Color PopupHover,
+        Color PopupPressed,
         Color AccentSoft,
         Color Success,
         Color SuccessSoft,
@@ -213,6 +243,21 @@ public partial class MainWindow : Window
             Color.FromRgb(0x1E, 0x40, 0xAF),
             Color.FromRgb(0xB9, 0x1C, 0x1C),
             Color.FromRgb(0xF2, 0xF7, 0xFF),
+            Color.FromRgb(0xEA, 0xF2, 0xFF),
+            Color.FromRgb(0xFF, 0xFF, 0xFF),
+            Color.FromRgb(0xFD, 0xFE, 0xFF),
+            Color.FromRgb(0xF3, 0xF7, 0xFD),
+            Color.FromRgb(0xEA, 0xF2, 0xFF),
+            Color.FromRgb(0xDC, 0xE5, 0xF2),
+            Color.FromRgb(0x25, 0x63, 0xEB),
+            Color.FromRgb(0x11, 0x18, 0x27),
+            Color.FromRgb(0x66, 0x70, 0x85),
+            Color.FromRgb(0x0F, 0x17, 0x2A),
+            Color.FromRgb(0x33, 0x41, 0x55),
+            Color.FromRgb(0x25, 0x63, 0xEB),
+            Color.FromRgb(0xFF, 0xFF, 0xFF),
+            Color.FromRgb(0xCB, 0xD8, 0xEA),
+            Color.FromRgb(0xF3, 0xF7, 0xFD),
             Color.FromRgb(0xEA, 0xF2, 0xFF),
             Color.FromRgb(0xEE, 0xF5, 0xFF),
             Color.FromRgb(0x3F, 0xB7, 0x73),
@@ -253,6 +298,21 @@ public partial class MainWindow : Window
             Color.FromRgb(0x99, 0x1B, 0x1B),
             Color.FromRgb(0x15, 0x24, 0x39),
             Color.FromRgb(0x17, 0x34, 0x5A),
+            Color.FromRgb(0x0F, 0x18, 0x24),
+            Color.FromRgb(0x12, 0x1D, 0x2A),
+            Color.FromRgb(0x1B, 0x2C, 0x40),
+            Color.FromRgb(0x1B, 0x3C, 0x68),
+            Color.FromRgb(0x2A, 0x3A, 0x4F),
+            Color.FromRgb(0x60, 0xA5, 0xFA),
+            Color.FromRgb(0xD6, 0xE3, 0xF5),
+            Color.FromRgb(0x98, 0xA6, 0xBA),
+            Color.FromRgb(0xF8, 0xFA, 0xFC),
+            Color.FromRgb(0xC8, 0xD7, 0xEA),
+            Color.FromRgb(0x60, 0xA5, 0xFA),
+            Color.FromRgb(0x13, 0x20, 0x2E),
+            Color.FromRgb(0x35, 0x47, 0x5E),
+            Color.FromRgb(0x1A, 0x2A, 0x3D),
+            Color.FromRgb(0x1C, 0x3A, 0x61),
             Color.FromRgb(0x10, 0x2A, 0x52),
             Color.FromRgb(0x34, 0xD3, 0x99),
             Color.FromRgb(0x0F, 0x2A, 0x1F),
